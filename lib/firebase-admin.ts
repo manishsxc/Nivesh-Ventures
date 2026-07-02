@@ -6,14 +6,17 @@ let adminApp: App;
 function getAdminApp() {
   if (getApps().length) return getApps()[0];
 
-  const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID;
+  const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
   const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
   let privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY;
   if (privateKey) {
+    privateKey = privateKey.trim();
     // Trim surrounding quotes if present (some env providers paste with quotes)
-    privateKey = privateKey.replace(/^\"|\"$/g, "");
+    privateKey = privateKey.replace(/^"|"$/g, "");
     // Replace escaped newlines with real newlines
     privateKey = privateKey.replace(/\\n/g, "\n");
+    // Also handle double-escaped newline sequences
+    privateKey = privateKey.replace(/\\\\n/g, "\\n");
   }
 
   if (!projectId || !clientEmail || !privateKey) {

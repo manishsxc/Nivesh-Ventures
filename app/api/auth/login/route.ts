@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import User from "@/models/User";
 import WebsiteSettings from "@/models/WebsiteSettings";
-import { compareSecret, signSession, SESSION_COOKIE } from "@/lib/auth-server";
+import { signSession, SESSION_COOKIE } from "@/lib/auth-server";
 import { verifyFirebaseToken } from "@/lib/firebase-admin";
 
 export async function POST(req: NextRequest) {
@@ -14,6 +14,9 @@ export async function POST(req: NextRequest) {
 
     await connectDB();
     const decoded = await verifyFirebaseToken(firebaseIdToken);
+    if (!decoded.uid) {
+      throw new Error("Invalid Firebase token payload");
+    }
     let user = await User.findOne({ firebaseUid: decoded.uid });
     if (!user && decoded.email) {
       user = await User.findOne({ email: decoded.email.toLowerCase() });
@@ -46,7 +49,15 @@ export async function POST(req: NextRequest) {
     });
     return res;
   } catch (err: any) {
-    console.error(err);
+    console.error("/api/auth/login error:", {
+      message: err?.message || err,
+      stack: err?.stack || "",
+      env: {
+        firebaseAdminProject: !!process.env.FIREBASE_ADMIN_PROJECT_ID,
+        firebaseAdminEmail: !!process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
+        jwtSecret: !!process.env.JWT_SECRET,
+      },
+    });
     return NextResponse.json({ error: err.message || "Login failed" }, { status: 500 });
   }
 }

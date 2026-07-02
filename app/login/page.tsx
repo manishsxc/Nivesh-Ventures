@@ -38,8 +38,14 @@ export default function LoginPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ firebaseIdToken: idToken }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+      let data;
+      const text = await res.text();
+      try {
+        data = JSON.parse(text);
+      } catch {
+        throw new Error(text || "Login failed");
+      }
+      if (!res.ok) throw new Error(data.error || text || "Login failed");
       toast.success("Welcome back!");
       router.push(data.role === "admin" ? "/admin" : "/dashboard");
     } catch (err: any) {
@@ -73,8 +79,14 @@ export default function LoginPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ firebaseIdToken: idToken, isGoogleLogin: true }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Google login failed");
+      let data;
+      const text = await res.text();
+      try {
+        data = JSON.parse(text);
+      } catch {
+        throw new Error(text || "Google login failed");
+      }
+      if (!res.ok) throw new Error(data.error || text || "Google login failed");
       toast.success("Welcome back!");
       router.push(data.role === "admin" ? "/admin" : "/dashboard");
     } catch (err: any) {

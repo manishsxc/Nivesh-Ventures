@@ -50,7 +50,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (u) => {
       setFirebaseUser(u);
-      await refreshProfile();
+      if (u) {
+        await refreshProfile();
+      } else {
+        setProfile(null);
+      }
       setLoading(false);
     });
     return () => unsub();
