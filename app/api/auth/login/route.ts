@@ -49,15 +49,27 @@ export async function POST(req: NextRequest) {
     });
     return res;
   } catch (err: any) {
+    const envDebug = {
+      firebaseAdminProjectId: !!process.env.FIREBASE_ADMIN_PROJECT_ID,
+      firebaseAdminClientEmail: !!process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
+      firebaseAdminPrivateKey: !!process.env.FIREBASE_ADMIN_PRIVATE_KEY,
+      firebasePublicProjectId: !!process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+      jwtSecret: !!process.env.JWT_SECRET,
+      mongodbUri: !!process.env.MONGODB_URI,
+    };
     console.error("/api/auth/login error:", {
       message: err?.message || err,
       stack: err?.stack || "",
-      env: {
-        firebaseAdminProject: !!process.env.FIREBASE_ADMIN_PROJECT_ID,
-        firebaseAdminEmail: !!process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
-        jwtSecret: !!process.env.JWT_SECRET,
-      },
+      env: envDebug,
     });
-    return NextResponse.json({ error: err.message || "Login failed" }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: err?.message || "Login failed",
+        code: err?.code || null,
+        env: envDebug,
+        stack: process.env.NODE_ENV !== "production" ? err?.stack : undefined,
+      },
+      { status: 500 }
+    );
   }
 }

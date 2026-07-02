@@ -51,7 +51,7 @@ export default function LoginPage() {
       }
       if (!res.ok) {
         console.error("Login failed response:", data);
-        throw new Error(data.error || "Login failed");
+        throw new Error(data.error || data.stack || "Login failed");
       }
       toast.success("Welcome back!");
       router.push(data.role === "admin" ? "/admin" : "/dashboard");
@@ -99,7 +99,7 @@ export default function LoginPage() {
       }
       if (!res.ok) {
         console.error("Google login failed response:", data);
-        throw new Error(data.error || "Google login failed");
+        throw new Error(data.error || data.stack || "Google login failed");
       }
       toast.success("Welcome back!");
       router.push(data.role === "admin" ? "/admin" : "/dashboard");
