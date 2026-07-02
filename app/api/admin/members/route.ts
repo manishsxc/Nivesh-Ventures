@@ -39,10 +39,27 @@ export async function PATCH(req: NextRequest) {
   }
 
   await connectDB();
-  const updated = await User.findOneAndUpdate({ memberId }, { isActive }, { new: true }).select(
-    "memberId isActive"
-  );
-  if (!updated) return NextResponse.json({ error: "Member not found" }, { status: 404 });
+  const user = await User.findOne({ memberId });
+  if (!user) return NextResponse.json({ error: "Member not found" }, { status: 404 });
 
-  return NextResponse.json({ success: true, member: updated });
+  user.isActive = isActive;
+  if (isActive) {
+    // If user has never been activated before (or has no expiry), set a new 365-day expiry
+    if (!user.accessExpiresAt || user.accessExpiresAt < new Date()) {
+      user.accessExpiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
+    }
+  }
+  await user.save();
+
+  // Trigger sponsor's booster calculation if user is activated
+  if (isActive && user.sponsorId) {
+    try {
+      const { checkAndAwardBooster } = await import("@/lib/booster");
+      await checkAndAwardBooster(user.sponsorId);
+    } catch (e) {
+      console.error("Booster check failed:", e);
+    }
+  }
+
+  return NextResponse.json({ success: true, member: user });
 }

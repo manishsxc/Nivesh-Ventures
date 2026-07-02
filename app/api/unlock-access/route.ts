@@ -53,5 +53,15 @@ export async function POST() {
     note: "Unlock Access renewal",
   });
 
+  // Check sponsor's booster eligibility
+  if (user.sponsorId) {
+    try {
+      const { checkAndAwardBooster } = await import("@/lib/booster");
+      await checkAndAwardBooster(user.sponsorId);
+    } catch (e) {
+      console.error("Booster check failed:", e);
+    }
+  }
+
   return NextResponse.json({ success: true, accessExpiresAt: newExpiry });
 }

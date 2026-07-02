@@ -76,13 +76,13 @@ export default function AdminMembersPage() {
                     <td className="py-2.5 pr-4">{m.rank}</td>
                     <td className="py-2.5 pr-4">
                       <span className={`text-xs px-2 py-0.5 rounded-full ${
-                        m.isActive ? "bg-neon-green/15 text-neon-green" : "bg-white/5 text-ink-muted"
-                      }`}>{m.isActive ? "Active" : "Inactive"}</span>
+                        m.isActive ? "bg-neon-green/15 text-neon-green" : "bg-neon-magenta/15 text-neon-magenta"
+                      }`}>{m.isActive ? "Unlocked" : "Locked"}</span>
                     </td>
                     <td className="py-2.5">
                       <button onClick={() => toggleActive(m.memberId, m.isActive)}
                         className="text-xs px-3 py-1 rounded-lg border border-white/15 hover:border-neon-cyan/60 transition">
-                        {m.isActive ? "Deactivate" : "Activate"}
+                        {m.isActive ? "Lock Profile" : "Unlock Profile"}
                       </button>
                     </td>
                   </tr>

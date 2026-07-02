@@ -64,11 +64,12 @@ export default function AdminDepositsPage() {
                     </div>
                   )}
                   <div>
-                    <p className="text-sm font-medium">{d.memberId}</p>
-                    <p className="text-xs text-ink-muted">Txn: {d.txnHash}</p>
+                    <p className="text-sm font-semibold text-neon-cyan">Amount: {d.amount?.toLocaleString() || "0"} USDT</p>
+                    <p className="text-sm font-medium mt-1">User ID: {d.memberId}</p>
+                    <p className="text-xs text-ink-muted mt-0.5">Txn ID / Hash: {d.txnHash}</p>
                     {d.paymentSlipUrl && (
-                      <div className="flex gap-2 items-center mt-1">
-                        <a href={d.paymentSlipUrl} target="_blank" className="text-xs text-neon-cyan">View full screenshot</a>
+                      <div className="flex gap-2 items-center mt-2">
+                        <a href={d.paymentSlipUrl} target="_blank" className="text-xs text-neon-cyan underline">View full screenshot</a>
                       </div>
                     )}
                   </div>
