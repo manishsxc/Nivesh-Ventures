@@ -31,21 +31,28 @@ export default function LoginPage() {
     }
     setLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      const idToken = await auth.currentUser?.getIdToken();
+      const credential = await signInWithEmailAndPassword(auth, email, password);
+      const idToken = await credential.user.getIdToken();
+      if (!idToken) {
+        throw new Error("Firebase ID token unavailable");
+      }
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ firebaseIdToken: idToken }),
       });
-      let data;
       const text = await res.text();
+      let data;
       try {
         data = JSON.parse(text);
       } catch {
+        console.error("Login response was not JSON:", text);
         throw new Error(text || "Login failed");
       }
-      if (!res.ok) throw new Error(data.error || text || "Login failed");
+      if (!res.ok) {
+        console.error("Login failed response:", data);
+        throw new Error(data.error || "Login failed");
+      }
       toast.success("Welcome back!");
       router.push(data.role === "admin" ? "/admin" : "/dashboard");
     } catch (err: any) {
@@ -74,19 +81,26 @@ export default function LoginPage() {
       }
 
       const idToken = await result.user.getIdToken();
+      if (!idToken) {
+        throw new Error("Firebase ID token unavailable");
+      }
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ firebaseIdToken: idToken, isGoogleLogin: true }),
       });
-      let data;
       const text = await res.text();
+      let data;
       try {
         data = JSON.parse(text);
       } catch {
+        console.error("Google login response was not JSON:", text);
         throw new Error(text || "Google login failed");
       }
-      if (!res.ok) throw new Error(data.error || text || "Google login failed");
+      if (!res.ok) {
+        console.error("Google login failed response:", data);
+        throw new Error(data.error || "Google login failed");
+      }
       toast.success("Welcome back!");
       router.push(data.role === "admin" ? "/admin" : "/dashboard");
     } catch (err: any) {
