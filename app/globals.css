@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-display: "Space Grotesk", sans-serif;
+  --font-body: "Inter", sans-serif;
+}
+
+* { scroll-behavior: smooth; }
+
+body {
+  background-color: #0A0E1A;
+  color: #E8E8F0;
+  font-family: var(--font-body);
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-base-card/70 backdrop-blur-xl border border-white/10 rounded-2xl;
+  }
+  .neon-border {
+    @apply border border-neon-violet/40 shadow-neon;
+  }
+  .btn-primary {
+    @apply bg-gradient-to-r from-neon-violet to-neon-cyan text-base font-semibold px-5 py-2.5 rounded-xl
+    shadow-neon-sm hover:shadow-neon transition-all duration-300 active:scale-95 disabled:opacity-50 disabled:pointer-events-none;
+  }
+  .btn-ghost {
+    @apply border border-white/15 text-ink px-5 py-2.5 rounded-xl hover:border-neon-violet/60 hover:bg-white/5 transition-all duration-300;
+  }
+  .input-field {
+    @apply w-full bg-base-soft border border-white/10 rounded-xl px-4 py-2.5 text-ink placeholder:text-ink-muted
+    focus:outline-none focus:border-neon-cyan/70 focus:shadow-neon-sm transition-all duration-200;
+  }
+  .stat-card {
+    @apply glass-card p-5 hover:border-neon-violet/40 transition-all duration-300;
+  }
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: #7B5CFF55; border-radius: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
