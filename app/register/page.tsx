@@ -8,12 +8,14 @@ import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import { auth, createUserWithEmailAndPassword } from "@/lib/firebase";
 import CopyrightGate from "@/components/CopyrightGate";
+import { useAuth } from "@/lib/AuthContext";
 
 const countries = ["India", "United States", "United Kingdom", "United Arab Emirates", "Nepal", "Bangladesh", "Other"];
 
 export default function RegisterPage() {
   const router = useRouter();
   const params = useSearchParams();
+  const { refreshProfile } = useAuth();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
@@ -75,6 +77,7 @@ export default function RegisterPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       toast.success("Account created — check your email for your Member ID");
+      await refreshProfile();
       router.push("/dashboard");
     } catch (err: any) {
       toast.error(err.message || "Registration failed");
@@ -91,7 +94,7 @@ export default function RegisterPage() {
         className="glass-card neon-border w-full max-w-md p-8"
       >
         <div className="flex items-center gap-2 mb-6 justify-center">
-          <Image src="/logo.svg" alt="Nivesh Ventures" width={36} height={36} className="rounded-lg" />
+          <Image src="/logo.png" alt="Nivesh Ventures" width={36} height={36} className="rounded-lg" />
           <span className="font-display font-bold text-lg">Nivesh Ventures</span>
         </div>
 

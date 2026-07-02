@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/AuthContext";
 import { Wallet, TrendingUp, Users, Trophy, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import Link from "next/link";
 import DirectProgressCard from "@/components/DirectProgressCard";
+import TransactionChart from "@/components/TransactionChart";
 import { currencySymbol } from "@/lib/currency";
 
 type Tx = { _id: string; type: string; direction: "credit" | "debit"; amount: number; currency: string; createdAt: string; note: string };
@@ -94,6 +95,9 @@ export default function DashboardPage() {
       </div>
 
       <DirectProgressCard directCount={stats?.direct ?? 0} />
+
+      {/* ── Activity chart ── */}
+      <TransactionChart transactions={transactions} />
 
       <div className="glass-card p-5 mt-6">
         <div className="flex items-center justify-between mb-4">

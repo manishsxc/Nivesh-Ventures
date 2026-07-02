@@ -195,11 +195,10 @@ overflow-hidden
               {messages.map((m, i) => (
                 <div key={i} className={`flex ${m.from === "user" ? "justify-end" : "justify-start"}`}>
                   <div
-                    className={`max-w-[85%] px-3 py-2 rounded-2xl text-sm whitespace-pre-line leading-relaxed ${
-                      m.from === "user"
+                    className={`max-w-[85%] px-3 py-2 rounded-2xl text-sm whitespace-pre-line leading-relaxed ${m.from === "user"
                         ? "bg-gradient-to-r from-neon-violet to-neon-cyan text-base rounded-br-sm"
                         : "bg-base-soft border border-white/10 rounded-bl-sm"
-                    }`}
+                      }`}
                   >
                     {m.text}
                   </div>
@@ -271,7 +270,7 @@ overflow-hidden
               )}
             </div>
 
-            <form
+            {/* <form
               onSubmit={(e) => {
                 e.preventDefault();
                 const input = (e.target as any).elements.q;
@@ -284,7 +283,7 @@ overflow-hidden
               <button type="submit" className="btn-primary px-3 py-2">
                 <Send size={15} />
               </button>
-            </form>
+            </form> */}
           </motion.div>
         )}
       </AnimatePresence>

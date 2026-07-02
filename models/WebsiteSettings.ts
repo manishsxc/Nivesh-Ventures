@@ -4,7 +4,7 @@ const WebsiteSettingsSchema = new Schema(
   {
     key: { type: String, default: "singleton", unique: true },
     websiteName: { type: String, default: "NexaChain" },
-    logoUrl: { type: String, default: "/logo.svg" },
+    logoUrl: { type: String, default: "/logo.png" },
     contactEmail: { type: String, default: "" },
     contactPhone: { type: String, default: "" },
     paymentUsdtAddress: { type: String, default: "" },

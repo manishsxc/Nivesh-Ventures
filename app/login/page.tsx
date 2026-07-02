@@ -15,9 +15,11 @@ import {
   signOut,
 } from "@/lib/firebase";
 import CopyrightGate from "@/components/CopyrightGate";
+import { useAuth } from "@/lib/AuthContext";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { refreshProfile } = useAuth();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -54,6 +56,7 @@ export default function LoginPage() {
         throw new Error(data.error || data.stack || "Login failed");
       }
       toast.success("Welcome back!");
+      await refreshProfile();
       router.push(data.role === "admin" ? "/admin" : "/dashboard");
     } catch (err: any) {
       toast.error(err.message?.replace("Firebase: ", "") || "Login failed");
@@ -102,6 +105,7 @@ export default function LoginPage() {
         throw new Error(data.error || data.stack || "Google login failed");
       }
       toast.success("Welcome back!");
+      await refreshProfile();
       router.push(data.role === "admin" ? "/admin" : "/dashboard");
     } catch (err: any) {
       toast.error(err.message?.replace("Firebase: ", "") || "Google login failed");
@@ -118,7 +122,7 @@ export default function LoginPage() {
         className="glass-card neon-border w-full max-w-md p-8"
       >
         <div className="flex items-center gap-2 mb-6 justify-center">
-          <Image src="/logo.svg" alt="Nivesh Ventures" width={36} height={36} className="rounded-lg" />
+          <Image src="/logo.png" alt="Nivesh Ventures" width={36} height={36} className="rounded-lg" />
           <span className="font-display font-bold text-lg">Nivesh Ventures</span>
         </div>
         <h1 className="font-display text-xl font-semibold text-center mb-6">Log in to your account</h1>

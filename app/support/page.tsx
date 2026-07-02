@@ -45,11 +45,11 @@ export default function SupportPage() {
     }
   }
 
-  function whatsapp() {
-    const no = process.env.NEXT_PUBLIC_WHATSAPP_SUPPORT_NO;
-    if (!no) { toast.error("WhatsApp support not configured"); return; }
-    window.open(`https://wa.me/${no}?text=${encodeURIComponent(form.message || "Hi, I need help.")}`, "_blank");
-  }
+  // function whatsapp() {
+  //   const no = process.env.NEXT_PUBLIC_WHATSAPP_SUPPORT_NO;
+  //   if (!no) { toast.error("WhatsApp support not configured"); return; }
+  //   window.open(`https://wa.me/${no}?text=${encodeURIComponent(form.message || "Hi, I need help.")}`, "_blank");
+  // }
 
   return (
     <DashboardShell>
@@ -72,9 +72,9 @@ export default function SupportPage() {
             <button disabled={sending} className="btn-primary flex-1 flex items-center justify-center gap-2">
               <Mail size={15} /> {sending ? "Sending..." : "Email Support"}
             </button>
-            <button type="button" onClick={whatsapp} className="btn-ghost flex-1 flex items-center justify-center gap-2">
+            {/* <button type="button" onClick={whatsapp} className="btn-ghost flex-1 flex items-center justify-center gap-2">
               <Phone size={15} /> WhatsApp
-            </button>
+            </button> */}
           </div>
         </form>
 

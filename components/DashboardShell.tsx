@@ -18,19 +18,42 @@ export default function DashboardShell({ children }: { children: React.ReactNode
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="h-dvh flex items-center justify-center">
         <div className="w-10 h-10 border-2 border-neon-violet border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen">
+    /*
+     * Outer shell: full viewport, no overflow.
+     * Sidebar + right-column sit side-by-side; nothing here scrolls.
+     */
+    <div className="flex h-dvh overflow-hidden">
+      {/* ── Sidebar (fixed chrome) ── */}
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <div className="flex-1 min-w-0">
+
+      {/*
+       * Right column: fills remaining width.
+       * flex-col so navbar pins to top and main takes the rest.
+       */}
+      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+        {/* ── Navbar (fixed chrome) ── */}
         <Navbar onMenuClick={() => setSidebarOpen(true)} />
-        <main className="p-4 lg:p-8 max-w-7xl mx-auto pb-24 lg:pb-8">{children}</main>
+
+        {/*
+         * ONLY THIS <main> SCROLLS.
+         * overflow-y-auto gives it an independent scroll context.
+         * pb-24 accounts for MobileBottomNav on small screens.
+         */}
+        <main className="flex-1 overflow-y-auto overflow-x-hidden">
+          <div className="p-4 lg:p-8 max-w-7xl mx-auto pb-24 lg:pb-8">
+            {children}
+          </div>
+        </main>
       </div>
+
+      {/* ── Mobile bottom nav (fixed chrome) ── */}
       <MobileBottomNav />
     </div>
   );
