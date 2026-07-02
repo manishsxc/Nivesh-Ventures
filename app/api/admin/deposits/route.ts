@@ -95,3 +95,23 @@ export async function PATCH(req: NextRequest) {
   return NextResponse.json({ success: true, deposit });
 }
 
+export async function DELETE(req: NextRequest) {
+  const guard = await requireAdmin();
+  if (guard.error) return guard.error;
+
+  const { searchParams } = new URL(req.url);
+  const depositId = searchParams.get("depositId");
+  if (!depositId) {
+    return NextResponse.json({ error: "depositId is required" }, { status: 400 });
+  }
+
+  await connectDB();
+  const deposit = await Deposit.findById(depositId);
+  if (!deposit) return NextResponse.json({ error: "Deposit not found" }, { status: 404 });
+
+  deposit.paymentSlipUrl = "";
+  await deposit.save();
+
+  return NextResponse.json({ success: true, deposit });
+}
+

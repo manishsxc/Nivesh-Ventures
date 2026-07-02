@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import DashboardShell from "@/components/DashboardShell";
 import AdminSubnav from "@/components/AdminSubnav";
 import toast from "react-hot-toast";
+import { X } from "lucide-react";
 
 export default function AdminKycPage() {
   const [members, setMembers] = useState<any[]>([]);
@@ -41,19 +42,76 @@ export default function AdminKycPage() {
                   <p className="text-sm font-medium">{m.fullName} <span className="text-xs text-ink-muted">({m.memberId})</span></p>
                   <div className="flex gap-2 mt-2">
                     {m.kycDocs?.aadhaarUrl && (
-                      <a href={m.kycDocs.aadhaarUrl} target="_blank">
-                        <img src={m.kycDocs.aadhaarUrl} alt="Aadhaar" className="w-14 h-14 rounded-lg object-cover border border-white/10" />
-                      </a>
+                      <div className="relative group shrink-0">
+                        <a href={m.kycDocs.aadhaarUrl} target="_blank">
+                          <img src={m.kycDocs.aadhaarUrl} alt="Aadhaar" className="w-14 h-14 rounded-lg object-cover border border-white/10" />
+                        </a>
+                        <button
+                          onClick={async () => {
+                            if (confirm("Are you sure you want to delete Aadhaar Card image?")) {
+                              const res = await fetch(`/api/admin/kyc?memberId=${m.memberId}&docType=aadhaarUrl`, { method: "DELETE" });
+                              if (res.ok) {
+                                toast.success("Aadhaar deleted");
+                                load();
+                              } else {
+                                toast.error("Failed to delete Aadhaar");
+                              }
+                            }
+                          }}
+                          className="absolute -top-1.5 -right-1.5 bg-neon-magenta text-white rounded-full p-1 shadow hover:bg-red-600 transition flex items-center justify-center"
+                          title="Delete Aadhaar image"
+                        >
+                          <X size={8} />
+                        </button>
+                      </div>
                     )}
                     {m.kycDocs?.panUrl && (
-                      <a href={m.kycDocs.panUrl} target="_blank">
-                        <img src={m.kycDocs.panUrl} alt="PAN" className="w-14 h-14 rounded-lg object-cover border border-white/10" />
-                      </a>
+                      <div className="relative group shrink-0">
+                        <a href={m.kycDocs.panUrl} target="_blank">
+                          <img src={m.kycDocs.panUrl} alt="PAN" className="w-14 h-14 rounded-lg object-cover border border-white/10" />
+                        </a>
+                        <button
+                          onClick={async () => {
+                            if (confirm("Are you sure you want to delete PAN Card image?")) {
+                              const res = await fetch(`/api/admin/kyc?memberId=${m.memberId}&docType=panUrl`, { method: "DELETE" });
+                              if (res.ok) {
+                                toast.success("PAN deleted");
+                                load();
+                              } else {
+                                toast.error("Failed to delete PAN");
+                              }
+                            }
+                          }}
+                          className="absolute -top-1.5 -right-1.5 bg-neon-magenta text-white rounded-full p-1 shadow hover:bg-red-600 transition flex items-center justify-center"
+                          title="Delete PAN image"
+                        >
+                          <X size={8} />
+                        </button>
+                      </div>
                     )}
                     {m.kycDocs?.bankProofUrl && (
-                      <a href={m.kycDocs.bankProofUrl} target="_blank">
-                        <img src={m.kycDocs.bankProofUrl} alt="Bank Proof" className="w-14 h-14 rounded-lg object-cover border border-white/10" />
-                      </a>
+                      <div className="relative group shrink-0">
+                        <a href={m.kycDocs.bankProofUrl} target="_blank">
+                          <img src={m.kycDocs.bankProofUrl} alt="Bank Proof" className="w-14 h-14 rounded-lg object-cover border border-white/10" />
+                        </a>
+                        <button
+                          onClick={async () => {
+                            if (confirm("Are you sure you want to delete Bank Proof image?")) {
+                              const res = await fetch(`/api/admin/kyc?memberId=${m.memberId}&docType=bankProofUrl`, { method: "DELETE" });
+                              if (res.ok) {
+                                toast.success("Bank Proof deleted");
+                                load();
+                              } else {
+                                toast.error("Failed to delete Bank Proof");
+                              }
+                            }
+                          }}
+                          className="absolute -top-1.5 -right-1.5 bg-neon-magenta text-white rounded-full p-1 shadow hover:bg-red-600 transition flex items-center justify-center"
+                          title="Delete Bank Proof image"
+                        >
+                          <X size={8} />
+                        </button>
+                      </div>
                     )}
                   </div>
                 </div>

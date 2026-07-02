@@ -3,18 +3,20 @@
 import { useState } from "react";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import { compressImage } from "@/lib/imageCompress";
-import { Upload, CheckCircle2, Loader2, Link2, AlertTriangle } from "lucide-react";
+import { Upload, CheckCircle2, Loader2, Link2, AlertTriangle, X } from "lucide-react";
 import toast from "react-hot-toast";
 
 export default function FileUploadField({
   label,
   value,
   onChange,
+  onDelete,
   showWarning = true,
 }: {
   label: string;
   value: string;
   onChange: (url: string) => void;
+  onDelete?: () => void;
   showWarning?: boolean;
 }) {
   const [uploading, setUploading] = useState(false);
@@ -61,9 +63,20 @@ export default function FileUploadField({
             <Link2 size={12} /> Or paste Drive link
           </button>
           {value && (
-            <a href={value} target="_blank" className="text-xs text-neon-green flex items-center gap-1">
-              <CheckCircle2 size={13} /> Uploaded — view
-            </a>
+            <div className="flex items-center gap-2">
+              <a href={value} target="_blank" className="text-xs text-neon-green flex items-center gap-1">
+                <CheckCircle2 size={13} /> Uploaded — view
+              </a>
+              {onDelete && (
+                <button
+                  type="button"
+                  onClick={onDelete}
+                  className="text-xs text-neon-magenta hover:underline ml-2"
+                >
+                  Delete
+                </button>
+              )}
+            </div>
           )}
         </div>
       ) : (
@@ -82,7 +95,19 @@ export default function FileUploadField({
       )}
 
       {value && /\.(jpg|jpeg|png|webp)$/i.test(value) && (
-        <img src={value} alt={label} className="mt-2 h-24 rounded-lg border border-white/10 object-cover" />
+        <div className="relative inline-block mt-2">
+          <img src={value} alt={label} className="h-24 rounded-lg border border-white/10 object-cover" />
+          {onDelete && (
+            <button
+              type="button"
+              onClick={onDelete}
+              className="absolute -top-1.5 -right-1.5 bg-neon-magenta/90 text-white rounded-full p-1 shadow hover:bg-neon-magenta transition flex items-center justify-center"
+              title="Delete image"
+            >
+              <X size={12} />
+            </button>
+          )}
+        </div>
       )}
 
       {showWarning && (

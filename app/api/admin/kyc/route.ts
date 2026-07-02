@@ -40,3 +40,28 @@ export async function PATCH(req: NextRequest) {
 
   return NextResponse.json({ success: true, user });
 }
+
+export async function DELETE(req: NextRequest) {
+  const guard = await requireAdmin();
+  if (guard.error) return guard.error;
+
+  const { searchParams } = new URL(req.url);
+  const memberId = searchParams.get("memberId");
+  const docType = searchParams.get("docType");
+
+  if (!memberId || !docType) {
+    return NextResponse.json({ error: "memberId and docType are required" }, { status: 400 });
+  }
+
+  await connectDB();
+  const user = await User.findOne({ memberId });
+  if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
+
+  if (user.kycDocs) {
+    user.kycDocs[docType] = "";
+    user.markModified("kycDocs");
+  }
+  await user.save();
+
+  return NextResponse.json({ success: true, user });
+}

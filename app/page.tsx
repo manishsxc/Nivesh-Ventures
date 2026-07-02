@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-[#050919] text-white flex flex-col">
+    <div className="min-h-screen bg-[#050919] text-white flex flex-col overflow-x-hidden w-full max-w-full">
 
       {/* CENTER CONTENT (LOGO) */}
       <div className="flex flex-1 items-center justify-center px-6">

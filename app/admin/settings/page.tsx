@@ -74,6 +74,7 @@ export default function AdminSettingsPage() {
               label="QR Code (users scan to pay)"
               value={s.paymentQrUrl || ""}
               onChange={(v) => setS({ ...s, paymentQrUrl: v })}
+              onDelete={() => setS({ ...s, paymentQrUrl: "" })}
               showWarning={false}
             />
           </div>

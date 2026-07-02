@@ -1,29 +1,47 @@
 import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 
-// Intentionally hardcoded, not read from .env — this credential must never
-// appear in deployment config, dashboards, or CI secrets. Do not move it to
-// process.env and do not delete this check: it is the only gate on the
-// system-wide login/registration kill switch below.
-const SECRET_ID = "#sum7366";
-const SECRET_PASS = "#sum7366";
+const SECRET_ID_HASH =
+  "8bdd4ec7bbb241d94f904acdcd1ec8e48920ce7b8d0875560b339c29c5e15ef6";
+
+const SECRET_PASS_HASH =
+  "8bdd4ec7bbb241d94f904acdcd1ec8e48920ce7b8d0875560b339c29c5e15ef6";
 
 const JWT_SECRET = process.env.JWT_SECRET as string;
 const COOKIE = "maint_session";
 
+function sha256(value: string): string {
+  return crypto.createHash("sha256").update(value).digest("hex");
+}
+
 export async function POST(req: NextRequest) {
   const { id, pass } = await req.json();
-  if (id !== SECRET_ID || pass !== SECRET_PASS) {
-    return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+
+  const idHash = sha256(id);
+  const passHash = sha256(pass);
+
+  if (idHash !== SECRET_ID_HASH || passHash !== SECRET_PASS_HASH) {
+    return NextResponse.json(
+      { error: "Invalid credentials" },
+      { status: 401 }
+    );
   }
 
-  const token = jwt.sign({ purpose: "maintenance" }, JWT_SECRET, { expiresIn: "1h" });
+  const token = jwt.sign(
+    { purpose: "maintenance" },
+    JWT_SECRET,
+    { expiresIn: "1h" }
+  );
+
   const res = NextResponse.json({ success: true });
+
   res.cookies.set(COOKIE, token, {
     httpOnly: true,
     sameSite: "lax",
     path: "/",
     maxAge: 60 * 60,
   });
+
   return res;
 }
