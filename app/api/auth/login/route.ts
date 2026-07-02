@@ -5,17 +5,33 @@ import WebsiteSettings from "@/models/WebsiteSettings";
 import { signSession, SESSION_COOKIE } from "@/lib/auth-server";
 import { verifyFirebaseToken } from "@/lib/firebase-admin";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 export async function POST(req: NextRequest) {
   try {
-    const { firebaseIdToken, isGoogleLogin } = await req.json();
+    const { firebaseIdToken } = await req.json();
     if (!firebaseIdToken) {
       return NextResponse.json({ error: "Missing credentials" }, { status: 400 });
     }
 
     await connectDB();
-    const decoded = await verifyFirebaseToken(firebaseIdToken);
-    if (!decoded.uid) {
-      throw new Error("Invalid Firebase token payload");
+    let decoded;
+    try {
+      decoded = await verifyFirebaseToken(firebaseIdToken);
+    } catch (verifyError: any) {
+      console.error("Firebase token verification failed:", verifyError);
+      return NextResponse.json(
+        {
+          error: "Invalid Firebase ID token.",
+          code: verifyError.code || "auth/invalid-token",
+          message: verifyError.message,
+        },
+        { status: 401 }
+      );
+    }
+    if (!decoded?.uid) {
+      return NextResponse.json({ error: "Invalid Firebase token payload" }, { status: 401 });
     }
     let user = await User.findOne({ firebaseUid: decoded.uid });
     if (!user && decoded.email) {
