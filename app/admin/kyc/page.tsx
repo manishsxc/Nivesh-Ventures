@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import Image from "next/image";
 import DashboardShell from "@/components/DashboardShell";
 import AdminSubnav from "@/components/AdminSubnav";
 import toast from "react-hot-toast";
@@ -10,13 +11,16 @@ export default function AdminKycPage() {
   const [members, setMembers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
     const res = await fetch("/api/admin/kyc?status=under_review", { cache: "no-store" });
     if (res.ok) setMembers((await res.json()).members || []);
     setLoading(false);
-  }
-  useEffect(() => { load(); }, []);
+  }, []);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
 
   async function decide(memberId: string, decision: "approved" | "rejected") {
     const res = await fetch("/api/admin/kyc", {
@@ -44,7 +48,7 @@ export default function AdminKycPage() {
                     {m.kycDocs?.aadhaarUrl && (
                       <div className="relative group shrink-0">
                         <a href={m.kycDocs.aadhaarUrl} target="_blank">
-                          <img src={m.kycDocs.aadhaarUrl} alt="Aadhaar" className="w-14 h-14 rounded-lg object-cover border border-white/10" />
+                          <Image src={m.kycDocs.aadhaarUrl} alt="Aadhaar" width={56} height={56} unoptimized className="w-14 h-14 rounded-lg object-cover border border-white/10" />
                         </a>
                         <button
                           onClick={async () => {
@@ -68,7 +72,7 @@ export default function AdminKycPage() {
                     {m.kycDocs?.panUrl && (
                       <div className="relative group shrink-0">
                         <a href={m.kycDocs.panUrl} target="_blank">
-                          <img src={m.kycDocs.panUrl} alt="PAN" className="w-14 h-14 rounded-lg object-cover border border-white/10" />
+                          <Image src={m.kycDocs.panUrl} alt="PAN" width={56} height={56} unoptimized className="w-14 h-14 rounded-lg object-cover border border-white/10" />
                         </a>
                         <button
                           onClick={async () => {
@@ -92,7 +96,7 @@ export default function AdminKycPage() {
                     {m.kycDocs?.bankProofUrl && (
                       <div className="relative group shrink-0">
                         <a href={m.kycDocs.bankProofUrl} target="_blank">
-                          <img src={m.kycDocs.bankProofUrl} alt="Bank Proof" className="w-14 h-14 rounded-lg object-cover border border-white/10" />
+                          <Image src={m.kycDocs.bankProofUrl} alt="Bank Proof" width={56} height={56} unoptimized className="w-14 h-14 rounded-lg object-cover border border-white/10" />
                         </a>
                         <button
                           onClick={async () => {

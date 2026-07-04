@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import Image from "next/image";
 import DashboardShell from "@/components/DashboardShell";
 import ReferralQRCard from "@/components/ReferralQRCard";
 import { useAuth } from "@/lib/AuthContext";
@@ -129,7 +130,7 @@ export default function ProfilePage() {
             <div className="flex items-center gap-4 mb-6">
               <div className="relative group w-16 h-16 rounded-full overflow-hidden">
                 {displayAvatar ? (
-                  <img src={displayAvatar} alt={displayName} className="w-full h-full object-cover" />
+                  <Image src={displayAvatar} alt={displayName} fill sizes="64px" unoptimized className="object-cover" />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-neon-violet to-neon-cyan flex items-center justify-center text-xl font-bold text-base">
                     {displayName?.[0]?.toUpperCase() || "U"}

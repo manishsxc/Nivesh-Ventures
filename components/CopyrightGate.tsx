@@ -3,6 +3,8 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
 
+import PasswordInput from "@/components/ui/PasswordInput";
+
 export default function CopyrightGate() {
   const [open, setOpen] = useState(false);
   const [authed, setAuthed] = useState(false);
@@ -76,7 +78,7 @@ export default function CopyrightGate() {
               <form onSubmit={submitLogin} className="space-y-3">
                 <p className="text-center text-sm text-ink-muted mb-2">Development mode — please ID or pass</p>
                 <input className="input-field" placeholder="ID" value={id} onChange={(e) => setId(e.target.value)} />
-                <input className="input-field" type="password" placeholder="Password" value={pass} onChange={(e) => setPass(e.target.value)} />
+                <PasswordInput placeholder="Password" value={pass} onChange={(e) => setPass(e.target.value)} />
                 <div className="flex gap-2">
                   <button disabled={busy} className="btn-primary flex-1 text-sm">{busy ? "..." : "Enter"}</button>
                   <button type="button" onClick={close} className="btn-ghost flex-1 text-sm">Cancel</button>

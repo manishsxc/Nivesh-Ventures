@@ -3,6 +3,7 @@ import { connectDB } from "@/lib/mongodb";
 import Deposit from "@/models/Deposit";
 import WebsiteSettings from "@/models/WebsiteSettings";
 import { getSessionFromCookies } from "@/lib/auth-server";
+import { notifyMember } from "@/lib/notification";
 
 export async function GET() {
   const session = await getSessionFromCookies();
@@ -33,6 +34,15 @@ export async function POST(req: NextRequest) {
     amount: amount || 0,
     status: "pending",
   });
+
+  // Notify user
+  notifyMember(
+    session.memberId,
+    "Deposit Submitted ✅",
+    `Your deposit of $${amount || 0} has been submitted and is under review.`,
+    "deposit_submitted",
+    deposit._id
+  ).catch(() => {});
 
   return NextResponse.json({ success: true, deposit });
 }

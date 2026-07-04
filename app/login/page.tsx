@@ -9,13 +9,11 @@ import toast from "react-hot-toast";
 import {
   auth,
   signInWithEmailAndPassword,
-  signInWithPopup,
-  GoogleAuthProvider,
-  fetchSignInMethodsForEmail,
-  signOut,
 } from "@/lib/firebase";
 import CopyrightGate from "@/components/CopyrightGate";
 import { useAuth } from "@/lib/AuthContext";
+
+import PasswordInput from "@/components/ui/PasswordInput";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -24,7 +22,6 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   
-
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     if (!email || !password) {
@@ -65,55 +62,6 @@ export default function LoginPage() {
     }
   }
 
-  async function handleGoogleLogin() {
-    setLoading(true);
-    try {
-      const provider = new GoogleAuthProvider();
-      provider.setCustomParameters({ prompt: "select_account" });
-      const result = await signInWithPopup(auth, provider);
-      const email = result.user.email?.toLowerCase();
-      if (!email) {
-        await signOut(auth);
-        throw new Error("Google account email not available");
-      }
-
-      const methods = await fetchSignInMethodsForEmail(auth, email);
-      if (!methods.length) {
-        await signOut(auth);
-        throw new Error("This Google account is not registered in Firebase");
-      }
-
-      const idToken = await result.user.getIdToken();
-      if (!idToken) {
-        throw new Error("Firebase ID token unavailable");
-      }
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ firebaseIdToken: idToken, isGoogleLogin: true }),
-      });
-      const text = await res.text();
-      let data;
-      try {
-        data = JSON.parse(text);
-      } catch {
-        console.error("Google login response was not JSON:", text);
-        throw new Error(text || "Google login failed");
-      }
-      if (!res.ok) {
-        console.error("Google login failed response:", data);
-        throw new Error(data.error || data.stack || "Google login failed");
-      }
-      toast.success("Welcome back!");
-      await refreshProfile();
-      router.push(data.role === "admin" ? "/admin" : "/dashboard");
-    } catch (err: any) {
-      toast.error(err.message?.replace("Firebase: ", "") || "Google login failed");
-    } finally {
-      setLoading(false);
-    }
-  }
-
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
       <motion.div
@@ -130,7 +78,7 @@ export default function LoginPage() {
         <form onSubmit={handleLogin} className="space-y-3">
           <input className="input-field" type="email" placeholder="Email address" value={email}
             onChange={(e) => setEmail(e.target.value)} />
-          <input className="input-field" type="password" placeholder="Password" value={password}
+          <PasswordInput placeholder="Password" value={password}
             onChange={(e) => setPassword(e.target.value)} />
           
           <button disabled={loading} className="btn-primary w-full">

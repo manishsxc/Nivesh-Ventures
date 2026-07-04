@@ -9,6 +9,7 @@ import toast from "react-hot-toast";
 import { auth, createUserWithEmailAndPassword } from "@/lib/firebase";
 import CopyrightGate from "@/components/CopyrightGate";
 import { useAuth } from "@/lib/AuthContext";
+import PasswordInput from "@/components/ui/PasswordInput";
 
 const countries = ["India", "United States", "United Kingdom", "United Arab Emirates", "Nepal", "Bangladesh", "Other"];
 
@@ -111,7 +112,7 @@ export default function RegisterPage() {
               onChange={(e) => update("mobile", e.target.value)} />
             <input className="input-field" type="email" placeholder="Gmail address" value={form.email}
               onChange={(e) => update("email", e.target.value)} />
-            <input className="input-field" type="password" placeholder="Create password (6+ chars)" value={form.password}
+            <PasswordInput placeholder="Create password (6+ chars)" value={form.password}
               onChange={(e) => update("password", e.target.value)} />
             <select className="input-field" value={form.country} onChange={(e) => update("country", e.target.value)}>
               {countries.map((c) => <option key={c} value={c}>{c}</option>)}

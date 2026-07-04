@@ -2,10 +2,8 @@
 
 import { useEffect, useState } from "react";
 import DashboardShell from "@/components/DashboardShell";
-import { useAuth } from "@/lib/AuthContext";
 
 export default function TeamPage() {
-  const { profile } = useAuth();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 

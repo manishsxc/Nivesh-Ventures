@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import SupportTicket from "@/models/SupportTicket";
+import User from "@/models/User";
 import { getSessionFromCookies } from "@/lib/auth-server";
+import { notifyMember, notifyUser } from "@/lib/notification";
 
 export async function GET() {
   const session = await getSessionFromCookies();
@@ -14,58 +16,116 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const { name, email, phone, message, subject } = body;
+    const session = await getSessionFromCookies();
+    if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
-    if (!name || !email || !message) {
-      return NextResponse.json({ error: "Name, email and message are required" }, { status: 400 });
+    const body = await req.json();
+    const { category, subject, message } = body;
+
+    if (!subject || !message) {
+      return NextResponse.json({ error: "Subject and message are required" }, { status: 400 });
     }
 
-    const session = await getSessionFromCookies();
     await connectDB();
 
-    if (session) {
-      await SupportTicket.create({
-        memberId: session.memberId,
-        subject: subject || "General inquiry",
-        message,
-      });
-    }
+    const titleSubject = category ? `[${category}] ${subject}` : subject;
 
-    // Send via Web3Forms to the real support email set in env.
-    const accessKey = process.env.WEB3FORMS_ACCESS_KEY;
-    let web3FormsOk = false;
+    const ticket = await SupportTicket.create({
+      memberId: session.memberId,
+      subject: titleSubject,
+      message,
+      status: "pending",
+    });
 
-    if (accessKey) {
+    // Notify Admin (we can create a notification for all admin users)
+    const admins = await User.find({ role: "admin" }).select("_id");
+    for (const admin of admins) {
       try {
-        const w3Res = await fetch("https://api.web3forms.com/submit", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            access_key: accessKey,
-            name,
-            email,
-            phone,
-            message,
-            subject: subject || "New support request",
-            to: process.env.SUPPORT_EMAIL,
-          }),
-        });
-        const w3Data = await w3Res.json();
-        web3FormsOk = !!w3Data.success;
+        await notifyUser(
+          admin._id,
+          "New Support Ticket Created",
+          `User ${session.memberId} raised a support ticket: "${subject}"`,
+          "support_ticket",
+          ticket._id
+        );
       } catch (e) {
-        web3FormsOk = false;
+        console.error("Admin notification failed:", e);
       }
     }
 
+    // Notify user themselves
+    notifyMember(
+      session.memberId,
+      "Support Ticket Submitted 🎫",
+      `Your support ticket "${titleSubject}" has been submitted. Our team will respond soon.`,
+      "support_ticket_created",
+      ticket._id
+    ).catch(() => {});
+
     return NextResponse.json({
       success: true,
-      web3FormsOk,
-      supportEmail: process.env.SUPPORT_EMAIL,
-      whatsapp: process.env.WHATSAPP_SUPPORT_NO,
+      ticket
     });
   } catch (err: any) {
     console.error(err);
     return NextResponse.json({ error: err.message || "Failed to submit request" }, { status: 500 });
   }
+}
+
+// User replying to ticket or deleting reply
+export async function PATCH(req: NextRequest) {
+  const session = await getSessionFromCookies();
+  if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+
+  const body = await req.json();
+  const { ticketId, message, action, replyId } = body;
+
+  if (!ticketId) {
+    return NextResponse.json({ error: "Ticket ID is required" }, { status: 400 });
+  }
+
+  await connectDB();
+  const ticket = await SupportTicket.findOne({ _id: ticketId, memberId: session.memberId });
+  if (!ticket) return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
+
+  if (action === "delete_reply") {
+    if (!replyId) {
+      return NextResponse.json({ error: "Reply ID is required to delete" }, { status: 400 });
+    }
+    ticket.replies = ticket.replies.filter((r: any) => r._id.toString() !== replyId);
+    await ticket.save();
+    return NextResponse.json({ success: true, ticket });
+  }
+
+  if (!message) {
+    return NextResponse.json({ error: "Message is required" }, { status: 400 });
+  }
+
+  ticket.replies.push({
+    from: "member",
+    message,
+    createdAt: new Date(),
+  });
+
+  // Re-open ticket state to pending when user replies
+  ticket.status = "pending";
+  await ticket.save();
+
+  // Notify Admins about new reply
+  const admins = await User.find({ role: "admin" }).select("_id");
+  for (const admin of admins) {
+    try {
+      await notifyUser(
+        admin._id,
+        "New Reply on Support Ticket",
+        `User ${session.memberId} replied to ticket: "${ticket.subject}"`,
+        "support_ticket",
+        ticket._id
+      );
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  return NextResponse.json({ success: true, ticket });
 }

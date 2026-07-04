@@ -23,6 +23,7 @@ import {
   FileCheck,
   FileText,
   Bell,
+  Zap,
 } from "lucide-react";
 import { useAuth } from "@/lib/AuthContext";
 import { signOut, auth } from "@/lib/firebase";
@@ -39,10 +40,12 @@ const links = [
   { href: "/team", label: "My Network", icon: Users },
   { href: "/income", label: "Income", icon: TrendingUp },
   { href: "/wallet", label: "Wallet", icon: Wallet },
+  { href: "/booster-wallet", label: "Booster Wallet", icon: Zap },
   { href: "/statement", label: "Account Statement", icon: FileText },
   { href: "/withdrawal", label: "Withdrawal", icon: ArrowLeftRight },
   { href: "/kyc", label: "KYC Verification", icon: FileCheck },
   { href: "/notices", label: "Notice Board", icon: Bell },
+  { href: "/notifications", label: "Notifications", icon: Bell },
   { href: "/settings", label: "Settings", icon: Settings },
   { href: "/support", label: "Support", icon: LifeBuoy },
 ];

@@ -13,6 +13,7 @@ import {
 } from "@/lib/auth-server";
 import { sendMail, welcomeEmailTemplate } from "@/lib/mailer";
 import { verifyFirebaseToken } from "@/lib/firebase-admin";
+import { notifyMember } from "@/lib/notification";
 
 export async function POST(req: NextRequest) {
   try {
@@ -97,6 +98,27 @@ export async function POST(req: NextRequest) {
       "Welcome — Your account is ready",
       welcomeEmailTemplate({ fullName, memberId, loginKey, accessKey })
     );
+
+    // Notifications
+    try {
+      await notifyMember(
+        memberId,
+        "Welcome to Nivesh Ventures! 🎉",
+        `Your account has been created successfully. Your Member ID is ${memberId}.`,
+        "registration"
+      );
+      // Notify sponsor if exists
+      if (sponsorId) {
+        await notifyMember(
+          sponsorId,
+          "New Referral Joined! 👥",
+          `${fullName} has joined Nivesh Ventures using your referral link.`,
+          "referral_joined"
+        );
+      }
+    } catch (notifyErr) {
+      console.error("Notification error:", notifyErr);
+    }
 
     const token = signSession({ memberId: user.memberId, role: "member" });
     const res = NextResponse.json({

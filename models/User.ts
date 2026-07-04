@@ -22,6 +22,7 @@ const UserSchema = new Schema(
     role: { type: String, enum: ["member", "admin"], default: "member" },
 
     walletBalance: { type: Number, default: 0 },
+    boosterWalletBalance: { type: Number, default: 0 },
     nivshWalletBalance: { type: Number, default: 0 },
     usdtWalletBalance: { type: Number, default: 0 },
     usdtWalletAddress: { type: String, default: "" },
@@ -59,6 +60,12 @@ const UserSchema = new Schema(
     rightTotalBusiness: { type: Number, default: 0 },
     accessPinHash: { type: String, default: null },
     firstDepositRewarded: { type: Boolean, default: false },
+    sortOrder: { type: Number, default: 0 },
+    isPinned: { type: Boolean, default: false },
+    withdrawalsEnabled: { type: Boolean, default: true },
+    isPremium: { type: Boolean, default: false },
+    premiumActivatedAt: { type: Date, default: null },
+    premiumExpiresAt: { type: Date, default: null },
   },
   { timestamps: true }
 );

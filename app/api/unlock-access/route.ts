@@ -4,6 +4,7 @@ import User from "@/models/User";
 import Transaction from "@/models/Transaction";
 import BusinessHistory from "@/models/BusinessHistory";
 import { getSessionFromCookies } from "@/lib/auth-server";
+import { notifyMember } from "@/lib/notification";
 
 const RENEWAL_AMOUNT = 30;
 const VALIDITY_DAYS = 365;
@@ -61,7 +62,23 @@ export async function POST() {
     } catch (e) {
       console.error("Booster check failed:", e);
     }
+
+    // Notify sponsor that their referral became active
+    notifyMember(
+      user.sponsorId,
+      "Referral Activated! 🎉",
+      `Your referral ${user.memberId} (${user.fullName}) has just activated their account. Great news for your network!`,
+      "referral_joined"
+    ).catch(() => {});
   }
+
+  // Notify user of successful activation
+  notifyMember(
+    user.memberId,
+    "Account Activated Successfully! ✅",
+    `Your account has been activated and is valid until ${newExpiry.toLocaleDateString()}. Welcome aboard!`,
+    "account_activation"
+  ).catch(() => {});
 
   return NextResponse.json({ success: true, accessExpiresAt: newExpiry });
 }

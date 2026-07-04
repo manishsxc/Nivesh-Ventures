@@ -15,6 +15,8 @@ import {
   Star,
   ArrowUpRight,
   ArrowDownRight,
+  Zap,
+  ShieldCheck,
 } from "lucide-react";
 import { currencySymbol } from "@/lib/currency";
 import Link from "next/link";
@@ -29,11 +31,15 @@ type Tx = {
   createdAt: string;
   note?: string;
   status?: string;
+  isAdmin?: boolean;
+  walletType?: string;
+  adminRemarks?: string;
 };
 
 type WalletData = {
   wallet: {
     walletBalance: number;
+    boosterWalletBalance: number;
     nivshWalletBalance: number;
     usdtWalletBalance: number;
     usdtWalletAddress: string;
@@ -83,6 +89,8 @@ export default function WalletPage() {
     "reward_income",
     "withdrawal",
     "deposit",
+    "admin_credit",
+    "admin_debit",
   ];
 
   const filteredTx = (data?.transactions ?? []).filter(
@@ -143,6 +151,22 @@ export default function WalletPage() {
           </p>
           <p className="text-xs text-ink-muted mt-1.5 leading-relaxed">
             BEP20 crypto balance for USDT transactions
+          </p>
+        </Link>
+      </div>
+
+      {/* ── Booster Wallet ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <Link href="/booster-wallet" className="stat-card group">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center mb-3">
+            <Zap size={18} className="text-white" />
+          </div>
+          <p className="text-xs text-ink-muted">Booster Wallet</p>
+          <p className="font-display text-xl font-bold mt-1 text-amber-400 group-hover:text-amber-300 transition">
+            {sym}{(w?.boosterWalletBalance ?? 0).toLocaleString()}
+          </p>
+          <p className="text-xs text-ink-muted mt-1.5 leading-relaxed">
+            Admin-managed promotional &amp; bonus balance
           </p>
         </Link>
       </div>
@@ -331,8 +355,11 @@ export default function WalletPage() {
                     )}
                   </div>
                   <div>
-                    <p className="text-sm font-medium capitalize">
-                      {t.type.replace(/_/g, " ")}
+                    <p className="text-sm font-medium capitalize flex items-center gap-1.5">
+                      {t.isAdmin && <ShieldCheck size={12} className="text-amber-400 shrink-0" />}
+                      {t.isAdmin
+                        ? (t.adminRemarks || `Admin ${t.direction}`)
+                        : t.type.replace(/_/g, " ")}
                     </p>
                     <div className="flex items-center gap-2 mt-0.5">
                       <p className="text-xs text-ink-muted">
@@ -342,6 +369,11 @@ export default function WalletPage() {
                           year: "numeric",
                         })}
                       </p>
+                      {t.isAdmin && t.walletType && (
+                        <span className="text-[10px] px-1.5 py-px rounded-full bg-amber-500/15 text-amber-400">
+                          {t.walletType === "main" ? "Main" : t.walletType === "booster" ? "Booster" : t.walletType === "nivesh" ? "Nivesh" : "USDT"}
+                        </span>
+                      )}
                       <span
                         className={`text-[10px] px-1.5 py-px rounded-full ${
                           t.status === "completed"

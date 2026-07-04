@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import DashboardShell from "@/components/DashboardShell";
 import toast from "react-hot-toast";
 
+import PasswordInput from "@/components/ui/PasswordInput";
+
 export default function TransferPage() {
   const [receiverId, setReceiverId] = useState("");
   const [receiverName, setReceiverName] = useState("");
@@ -70,7 +72,7 @@ export default function TransferPage() {
           onChange={(e) => setAmount(e.target.value)} />
         <input className="input-field" placeholder="Remarks (optional)" value={remarks}
           onChange={(e) => setRemarks(e.target.value)} />
-        <input className="input-field" type="password" placeholder="Access Key" value={accessKey}
+        <PasswordInput placeholder="Access Key" value={accessKey}
           onChange={(e) => setAccessKey(e.target.value)} />
         <button disabled={busy} className="btn-primary w-full">{busy ? "Sending..." : "Transfer Funds"}</button>
       </form>

@@ -3,7 +3,9 @@ import { connectDB } from "@/lib/mongodb";
 import User from "@/models/User";
 import Withdrawal from "@/models/Withdrawal";
 import Transaction from "@/models/Transaction";
+import WebsiteSettings from "@/models/WebsiteSettings";
 import { compareSecret, getSessionFromCookies } from "@/lib/auth-server";
+import { notifyMember } from "@/lib/notification";
 
 const MIN_EARNING_WITHDRAWAL_USDT = 10;
 const CHARGE_RATE = 0.03;
@@ -25,6 +27,15 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { amount, mode, bankDetails, usdtAddress, accessKey, withdrawalKind } = body;
 
+    await connectDB();
+    const settings = await WebsiteSettings.findOne({ key: "singleton" });
+    if (settings && settings.withdrawalsEnabled === false) {
+      return NextResponse.json(
+        { error: "Withdrawals are temporarily unavailable due to technical maintenance. Please try again later." },
+        { status: 403 }
+      );
+    }
+
     if (!amount || !mode || !accessKey) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
@@ -44,6 +55,10 @@ export async function POST(req: NextRequest) {
     await connectDB();
     const user = await User.findOne({ memberId: session.memberId });
     if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
+
+    if (user.withdrawalsEnabled === false) {
+      return NextResponse.json({ error: "Withdrawals are disabled for your account. Please contact support." }, { status: 403 });
+    }
 
     const validKey = await compareSecret(accessKey, user.accessKeyHash);
     if (!validKey) return NextResponse.json({ error: "Invalid Access Key" }, { status: 401 });
@@ -80,6 +95,15 @@ export async function POST(req: NextRequest) {
       note: "Withdrawal request submitted",
       referenceId: withdrawal._id.toString(),
     });
+
+    // Notify user
+    notifyMember(
+      user.memberId,
+      "Withdrawal Request Submitted 📤",
+      `Your withdrawal request of $${amount} (${mode}) has been submitted and is under review.`,
+      "withdrawal_requested",
+      withdrawal._id
+    ).catch(() => {});
 
     return NextResponse.json({ success: true, withdrawal });
   } catch (err: any) {

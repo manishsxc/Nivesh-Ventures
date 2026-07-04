@@ -5,16 +5,64 @@ import Transaction from "@/models/Transaction";
 import User from "@/models/User";
 import Notice from "@/models/Notice";
 import { requireAdmin } from "@/lib/require-admin";
+import { notifyMember } from "@/lib/notification";
 
 export async function GET(req: NextRequest) {
   const guard = await requireAdmin();
   if (guard.error) return guard.error;
 
   await connectDB();
-  const status = req.nextUrl.searchParams.get("status");
-  const query = status ? { status } : {};
+  const searchParams = req.nextUrl.searchParams;
+  const status = searchParams.get("status") || "";
+  const memberId = searchParams.get("memberId") || "";
+  const walletType = searchParams.get("walletType") || ""; // Main, Booster, Returns etc (matching withdrawalKind in our schema)
+  const q = searchParams.get("q") || "";
+
+  const query: any = {};
+  if (status) query.status = status;
+  if (memberId) query.memberId = { $regex: memberId, $options: "i" };
+  if (walletType) query.withdrawalKind = walletType;
+
+  // Perform a user join if 'q' search is specified
+  if (q) {
+    const matchedUsers = await User.find({
+      $or: [
+        { fullName: { $regex: q, $options: "i" } },
+        { memberId: { $regex: q, $options: "i" } }
+      ]
+    }).select("memberId");
+    
+    const ids = matchedUsers.map(u => u.memberId);
+    query.memberId = { $in: ids };
+  }
+
   const withdrawals = await Withdrawal.find(query).sort({ createdAt: -1 }).limit(200);
-  return NextResponse.json({ withdrawals });
+
+  // Statistics calculation
+  const allWithdrawals = await Withdrawal.find({});
+  const totalWithdrawals = allWithdrawals.length;
+  let pendingCount = 0;
+  let approvedCount = 0;
+  let rejectedCount = 0;
+  let totalAmount = 0;
+
+  allWithdrawals.forEach(w => {
+    if (w.status === "pending") pendingCount++;
+    else if (w.status === "completed" || w.status === "approved") approvedCount++;
+    else if (w.status === "rejected") rejectedCount++;
+    totalAmount += w.amount;
+  });
+
+  return NextResponse.json({ 
+    withdrawals,
+    stats: {
+      totalWithdrawals,
+      pendingCount,
+      approvedCount,
+      rejectedCount,
+      totalAmount
+    }
+  });
 }
 
 export async function PATCH(req: NextRequest) {
@@ -62,6 +110,17 @@ export async function PATCH(req: NextRequest) {
     audience: "specific",
     targetMemberId: withdrawal.memberId,
   });
+
+  // Personal notification
+  notifyMember(
+    withdrawal.memberId,
+    action === "approve" ? "Withdrawal Approved ✅" : "Withdrawal Rejected ❌",
+    action === "approve"
+      ? `Your withdrawal of $${withdrawal.netPayable} (${withdrawal.mode}) has been processed successfully.`
+      : `Your withdrawal request of $${withdrawal.amount} was rejected and refunded to your wallet.${adminNote ? " Reason: " + adminNote : ""}`,
+    action === "approve" ? "withdrawal_approved" : "withdrawal_rejected",
+    withdrawal._id
+  ).catch(() => {});
 
   return NextResponse.json({ success: true, withdrawal });
 }

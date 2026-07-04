@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageCircle, X, ArrowLeft, Send, Mail, Phone } from "lucide-react";
+import { MessageCircle, X, ArrowLeft, Mail, Phone } from "lucide-react";
 import { faqTree, faqIndex, FaqNode } from "@/lib/faqData";
 import { useAuth } from "@/lib/AuthContext";
 import { useChatbot } from "@/lib/ChatbotContext";
@@ -47,26 +47,6 @@ export default function ChatbotWidget() {
       { from: "user", text: node.question },
       { from: "bot", text: node.answer, node },
     ]);
-  }
-
-  function handleFreeText(text: string) {
-    if (!text.trim()) return;
-    const lower = text.toLowerCase();
-    const match = faqTree.find(
-      (f) => lower.includes(f.id.replace("-", " ")) || f.question.toLowerCase().includes(lower.split(" ")[0])
-    );
-    setMessages((m) => [...m, { from: "user", text }]);
-    if (match) {
-      setMessages((m) => [...m, { from: "bot", text: match.answer, node: match }]);
-    } else {
-      setMessages((m) => [
-        ...m,
-        {
-          from: "bot",
-          text: "Not sure on that one exactly — pick a topic below, or contact support and a human will help.",
-        },
-      ]);
-    }
   }
 
   async function submitSupport(e: React.FormEvent) {

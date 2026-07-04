@@ -3,6 +3,7 @@ import { connectDB } from "@/lib/mongodb";
 import Otp from "@/models/Otp";
 import User from "@/models/User";
 import { compareSecret, generateKey, getSessionFromCookies, hashSecret } from "@/lib/auth-server";
+import { notifyMember } from "@/lib/notification";
 
 export async function POST(req: NextRequest) {
   const session = await getSessionFromCookies();
@@ -37,6 +38,13 @@ export async function POST(req: NextRequest) {
     await user.save();
     otpDoc.consumed = true;
     await otpDoc.save();
+
+    notifyMember(
+      user.memberId,
+      "Login Key Changed 🔑",
+      "Your login key has been changed successfully. If you did not do this, please contact support immediately.",
+      "password_changed"
+    ).catch(() => {});
 
     return NextResponse.json({ success: true, newLoginKey: newKey });
   } catch (err: any) {

@@ -6,6 +6,7 @@ import Transaction from "@/models/Transaction";
 import WebsiteSettings from "@/models/WebsiteSettings";
 import Notice from "@/models/Notice";
 import { requireAdmin } from "@/lib/require-admin";
+import { notifyMember } from "@/lib/notification";
 
 export async function GET(req: NextRequest) {
   const guard = await requireAdmin();
@@ -81,6 +82,13 @@ export async function PATCH(req: NextRequest) {
       audience: "specific",
       targetMemberId: deposit.memberId,
     });
+    notifyMember(
+      deposit.memberId,
+      "Deposit Approved ✅",
+      `Your deposit of $${creditAmount} has been verified and credited to your wallet.`,
+      "deposit_approved",
+      deposit._id
+    ).catch(() => {});
   } else {
     deposit.status = "rejected";
     await Notice.create({
@@ -89,6 +97,13 @@ export async function PATCH(req: NextRequest) {
       audience: "specific",
       targetMemberId: deposit.memberId,
     });
+    notifyMember(
+      deposit.memberId,
+      "Deposit Rejected ❌",
+      "Your deposit request was rejected. The screenshot/transaction could not be verified. Contact support if needed.",
+      "deposit_rejected",
+      deposit._id
+    ).catch(() => {});
   }
   await deposit.save();
 

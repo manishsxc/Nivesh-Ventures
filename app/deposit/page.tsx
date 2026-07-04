@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import DashboardShell from "@/components/DashboardShell";
 import { QRCodeCanvas } from "qrcode.react";
 import FileUploadField from "@/components/FileUploadField";
@@ -56,7 +57,7 @@ export default function DepositPage() {
         <div className="glass-card p-6 text-center">
           <h2 className="font-display font-semibold mb-3">Send USDT (BEP-20)</h2>
           {paymentQrUrl ? (
-            <img src={paymentQrUrl} alt="Payment QR" className="w-40 h-40 mx-auto rounded-2xl mb-3 border border-white/10" />
+            <Image src={paymentQrUrl} alt="Payment QR" width={160} height={160} unoptimized className="w-40 h-40 mx-auto rounded-2xl mb-3 border border-white/10" />
           ) : walletAddress ? (
             <div className="p-4 bg-white rounded-2xl inline-block mb-3">
               <QRCodeCanvas value={walletAddress} size={160} />

@@ -6,16 +6,22 @@ import { usePathname } from "next/navigation";
 const tabs = [
   { href: "/admin", label: "Dashboard" },
   { href: "/admin/members", label: "Members" },
+  { href: "/admin/premium", label: "Premium Members" },
   { href: "/admin/withdrawals", label: "Withdrawals" },
   { href: "/admin/deposits", label: "Deposits" },
   { href: "/admin/kyc", label: "KYC" },
   { href: "/admin/commission", label: "Commission" },
+  { href: "/admin/monthly-closing", label: "Monthly Closing" },
   { href: "/admin/rewards", label: "Rewards" },
   { href: "/admin/share-tree", label: "Share Tree" },
   { href: "/admin/notices", label: "Notices" },
-  { href: "/admin/reports", label: "Reports" },
+  { href: "/admin/reports", label: "Reports & Analytics" },
+  { href: "/admin/refunds", label: "Refunds" },
   { href: "/admin/offers", label: "Offers" },
   { href: "/admin/settings", label: "Website" },
+  { href: "/admin/support", label: "Support Tickets" },
+  { href: "/admin/booster-wallet", label: "Booster Wallet" },
+  { href: "/admin/notifications", label: "Notifications" },
 ];
 
 export default function AdminSubnav() {

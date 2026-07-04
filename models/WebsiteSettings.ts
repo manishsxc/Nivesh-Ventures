@@ -12,6 +12,7 @@ const WebsiteSettingsSchema = new Schema(
     privacyUrl: { type: String, default: "" },
     shareRewardAmount: { type: Number, default: 0 },
     maintenanceMode: { type: Boolean, default: true }, // true = live, false = blocked
+    withdrawalsEnabled: { type: Boolean, default: true },
     paymentQrUrl: { type: String, default: "" },
     bankDetails: {
       bankName: String,
@@ -24,6 +25,7 @@ const WebsiteSettingsSchema = new Schema(
       minInvestment: { type: Number, default: 100 },
       minWithdrawal: { type: Number, default: 10 },
     },
+    dashboardWelcomeBannerUrl: { type: String, default: "" },
   },
   { timestamps: true }
 );

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import { compressImage } from "@/lib/imageCompress";
@@ -33,7 +34,7 @@ export default function FileUploadField({
       const url = await uploadToCloudinary(compressed);
       onChange(url);
       toast.success(`${label} uploaded`);
-    } catch (err: any) {
+    } catch {
       setCloudinaryFailed(true);
       setUseLink(true);
       toast.error("Upload failed — paste a Google Drive link instead");
@@ -96,7 +97,7 @@ export default function FileUploadField({
 
       {value && /\.(jpg|jpeg|png|webp)$/i.test(value) && (
         <div className="relative inline-block mt-2">
-          <img src={value} alt={label} className="h-24 rounded-lg border border-white/10 object-cover" />
+          <Image src={value} alt={label} width={96} height={96} unoptimized className="h-24 rounded-lg border border-white/10 object-cover" />
           {onDelete && (
             <button
               type="button"

@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 
+import PasswordInput from "@/components/ui/PasswordInput";
+
 export default function ResetPasswordPage() {
   const router = useRouter();
   const [step, setStep] = useState<1 | 2>(1);
@@ -69,7 +71,7 @@ export default function ResetPasswordPage() {
           <form onSubmit={submitReset} className="space-y-3">
             <p className="text-sm text-ink-muted">Enter the OTP sent to <strong>{email}</strong></p>
             <input className="input-field" placeholder="Enter OTP" value={otp} onChange={(e) => setOtp(e.target.value)} />
-            <input className="input-field" type="password" placeholder="New password (6+ chars)" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+            <PasswordInput placeholder="New password (6+ chars)" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
             <button disabled={loading} className="btn-primary w-full">{loading ? "Updating..." : "Update password"}</button>
             <button type="button" className="btn-ghost w-full" onClick={() => setStep(1)}>Back</button>
           </form>

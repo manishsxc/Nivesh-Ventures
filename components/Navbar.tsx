@@ -3,9 +3,18 @@
 import { Menu, Bell } from "lucide-react";
 import { useAuth } from "@/lib/AuthContext";
 import Image from "next/image";
+import Link from "next/link";
+import useSWR from "swr";
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function Navbar({ onMenuClick }: { onMenuClick: () => void }) {
   const { profile } = useAuth();
+  const { data: notifData } = useSWR("/api/notifications?limit=1", fetcher, {
+    refreshInterval: 10000, // Poll every 10 seconds
+  });
+
+  const unreadCount = notifData?.unread || 0;
 
   return (
     <header className="sticky top-0 z-30 bg-base/80 backdrop-blur-xl border-b border-white/10 px-4 lg:px-8 py-3 flex items-center justify-between">
@@ -14,24 +23,29 @@ export default function Navbar({ onMenuClick }: { onMenuClick: () => void }) {
         <button onClick={onMenuClick} className="lg:hidden text-ink-muted">
           <Menu size={22} />
         </button>
-
+ 
         {/* Logo + brand name — only visible on mobile (hidden on lg where sidebar shows) */}
         <div className="flex items-center gap-2 lg:hidden">
           <Image src="/logo.png" alt="Nivesh Ventures" width={32} height={32} className="rounded-lg object-contain" />
           <span className="font-display font-bold text-sm tracking-wide text-ink">NIVESH VENTURES</span>
         </div>
       </div>
-
+ 
       {/* Center: welcome text on desktop */}
       <div className="hidden lg:block text-sm text-ink-muted">
         {profile ? `Welcome back, ${profile.fullName?.split(" ")[0]}` : ""}
       </div>
-
+ 
       {/* Right: bell + avatar */}
       <div className="flex items-center gap-4">
-        <button className="relative text-ink-muted hover:text-neon-cyan transition">
-          <Bell size={10} />
-        </button>
+        <Link href="/notifications" className="relative text-ink-muted hover:text-neon-cyan transition block">
+          <Bell size={20} />
+          {unreadCount > 0 && (
+            <span className="absolute -top-1.5 -right-1.5 bg-neon-magenta text-white text-[9px] font-bold h-4 w-4 rounded-full flex items-center justify-center border border-base animate-pulse">
+              {unreadCount > 99 ? "99+" : unreadCount}
+            </span>
+          )}
+        </Link>
         <div className="flex items-center gap-2">
           <div className="w-9 h-9 rounded-full bg-gradient-to-br from-neon-violet to-neon-cyan flex items-center justify-center text-xs font-bold text-base">
             {profile?.fullName?.[0]?.toUpperCase() || "U"}

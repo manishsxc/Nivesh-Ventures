@@ -6,8 +6,10 @@ import { useAuth } from "@/lib/AuthContext";
 import toast from "react-hot-toast";
 import { KeyRound, Wallet } from "lucide-react";
 
+import PasswordInput from "@/components/ui/PasswordInput";
+
 export default function SettingsPage() {
-  const { profile, refreshProfile } = useAuth();
+  const { profile } = useAuth();
 
   const [loginKeyStep, setLoginKeyStep] = useState<0 | 1>(0);
   const [loginOtp, setLoginOtp] = useState("");
@@ -108,7 +110,7 @@ export default function SettingsPage() {
             <form onSubmit={submitLoginKeyChange} className="space-y-3">
               <input className="input-field" placeholder="Enter OTP" value={loginOtp}
                 onChange={(e) => setLoginOtp(e.target.value)} />
-              <input className="input-field" type="password" placeholder="Current Login Key" value={currentLoginKey}
+              <PasswordInput placeholder="Current Login Key" value={currentLoginKey}
                 onChange={(e) => setCurrentLoginKey(e.target.value)} />
               <button disabled={loginBusy} className="btn-primary text-sm">
                 {loginBusy ? "Updating..." : "Update Login Key"}
@@ -138,7 +140,7 @@ export default function SettingsPage() {
             <form onSubmit={submitAccessKeyChange} className="space-y-3">
               <input className="input-field" placeholder="Enter OTP" value={accessOtp}
                 onChange={(e) => setAccessOtp(e.target.value)} />
-              <input className="input-field" type="password" placeholder="Login Key (for verification)" value={confirmLoginKey}
+              <PasswordInput placeholder="Login Key (for verification)" value={confirmLoginKey}
                 onChange={(e) => setConfirmLoginKey(e.target.value)} />
               <button disabled={accessBusy} className="btn-primary text-sm">
                 {accessBusy ? "Updating..." : "Update Access Key"}

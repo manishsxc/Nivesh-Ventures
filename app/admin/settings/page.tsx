@@ -68,6 +68,18 @@ export default function AdminSettingsPage() {
         </div>
 
         <div className="space-y-6">
+
+          <div className="glass-card p-6">
+            <h2 className="font-display font-semibold mb-3">Dashboard Welcome Banner</h2>
+            <FileUploadField
+              label="Banner Image (Replaces NV logo on Dashboard)"
+              value={s.dashboardWelcomeBannerUrl || ""}
+              onChange={(v) => setS({ ...s, dashboardWelcomeBannerUrl: v })}
+              onDelete={() => setS({ ...s, dashboardWelcomeBannerUrl: "" })}
+              showWarning={false}
+            />
+          </div>
+
           <div className="glass-card p-6">
             <h2 className="font-display font-semibold mb-3">Payment QR Code</h2>
             <FileUploadField

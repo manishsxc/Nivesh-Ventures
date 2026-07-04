@@ -4,6 +4,7 @@ import User from "@/models/User";
 import WebsiteSettings from "@/models/WebsiteSettings";
 import { signSession, SESSION_COOKIE } from "@/lib/auth-server";
 import { verifyFirebaseToken } from "@/lib/firebase-admin";
+import { notifyMember } from "@/lib/notification";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -53,6 +54,18 @@ export async function POST(req: NextRequest) {
     if (settings && settings.maintenanceMode === false && user.role !== "admin") {
       return NextResponse.json({ error: "System is under maintenance. Try again later." }, { status: 503 });
     }
+
+    // Update last login
+    user.lastLogin = new Date();
+    await user.save();
+
+    // Login notification (async, don't block)
+    notifyMember(
+      user.memberId,
+      "New Login Detected",
+      `Your account was accessed. If this wasn't you, please contact support immediately.`,
+      "login"
+    ).catch(() => {});
 
     const token = signSession({ memberId: user.memberId, role: user.role });
     const res = NextResponse.json({ success: true, memberId: user.memberId, role: user.role });

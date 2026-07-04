@@ -18,6 +18,7 @@ const TransactionSchema = new Schema(
         "p2p_transfer_in",
         "p2p_transfer_out",
         "share_reward",
+        "refund",
       ],
       required: true,
     },
@@ -26,6 +27,7 @@ const TransactionSchema = new Schema(
     currency: { type: String, enum: ["INR", "USDT"], default: "USDT" },
     status: { type: String, enum: ["pending", "completed", "failed"], default: "completed" },
     note: { type: String, default: "" },
+    walletType: { type: String, default: "main" },
     referenceId: { type: String, default: "" },
   },
   { timestamps: true }

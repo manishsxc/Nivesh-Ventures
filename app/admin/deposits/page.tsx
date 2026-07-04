@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import Image from "next/image";
 import DashboardShell from "@/components/DashboardShell";
 import AdminSubnav from "@/components/AdminSubnav";
 import toast from "react-hot-toast";
@@ -10,13 +11,16 @@ export default function AdminDepositsPage() {
   const [deposits, setDeposits] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
     const res = await fetch("/api/admin/deposits?status=pending", { cache: "no-store" });
     if (res.ok) setDeposits((await res.json()).deposits || []);
     setLoading(false);
-  }
-  useEffect(() => { load(); }, []);
+  }, []);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
 
   async function act(depositId: string, action: "verify" | "reject", amount?: number) {
     const res = await fetch("/api/admin/deposits", {
@@ -42,7 +46,7 @@ export default function AdminDepositsPage() {
                   {d.paymentSlipUrl && (
                     <div className="relative group shrink-0">
                       <a href={d.paymentSlipUrl} target="_blank">
-                        <img src={d.paymentSlipUrl} alt="Payment proof" className="w-16 h-16 rounded-lg object-cover border border-white/10" />
+                        <Image src={d.paymentSlipUrl} alt="Payment proof" width={64} height={64} unoptimized className="w-16 h-16 rounded-lg object-cover border border-white/10" />
                       </a>
                       <button
                         onClick={async () => {

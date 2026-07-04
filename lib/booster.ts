@@ -22,6 +22,9 @@ export async function checkAndAwardBooster(sponsorId: string) {
   // If not active, they cannot receive booster rewards
   if (!sponsor.isActive) return;
 
+  // Sponsor must also be premium
+  if (!sponsor.isPremium) return;
+
   // We can calculate activation date:
   // If accessExpiresAt exists, it is set to VALIDITY_DAYS (365) days from activation date.
   // Therefore, activationDate = accessExpiresAt - 365 days
@@ -74,6 +77,20 @@ export async function checkAndAwardBooster(sponsorId: string) {
       status: "completed",
       note: "Booster Level 1 Reward - 3 Active Referrals in 7 Days",
     });
+
+    // Log in RewardHistory
+    try {
+      const RewardHistory = (await import("@/models/RewardHistory")).default;
+      await RewardHistory.create({
+        memberId: sponsor.memberId,
+        rewardType: "booster_reward",
+        amount: 15,
+        status: "released",
+        adminRemarks: "Booster Level 1 Reward - 3 Active Referrals in 7 Days",
+      });
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   // Check if Level 2 ($30) has already been awarded.
@@ -84,6 +101,9 @@ export async function checkAndAwardBooster(sponsorId: string) {
   });
 
   if (count >= 5 && !hasLvl2) {
+    // If not premium, they cannot receive booster rewards
+    if (!sponsor.isPremium) return;
+
     sponsor.totalRewardIncome = (sponsor.totalRewardIncome || 0) + 30;
     sponsor.walletBalance = (sponsor.walletBalance || 0) + 30;
     await sponsor.save();
@@ -97,5 +117,19 @@ export async function checkAndAwardBooster(sponsorId: string) {
       status: "completed",
       note: "Booster Level 2 Reward - 5 Active Referrals in 7 Days",
     });
+
+    // Log in RewardHistory
+    try {
+      const RewardHistory = (await import("@/models/RewardHistory")).default;
+      await RewardHistory.create({
+        memberId: sponsor.memberId,
+        rewardType: "booster_reward",
+        amount: 30,
+        status: "released",
+        adminRemarks: "Booster Level 2 Reward - 5 Active Referrals in 7 Days",
+      });
+    } catch (e) {
+      console.error(e);
+    }
   }
 }

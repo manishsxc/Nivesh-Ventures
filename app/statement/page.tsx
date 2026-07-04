@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import DashboardShell from "@/components/DashboardShell";
 import { useAuth } from "@/lib/AuthContext";
 import { currencySymbol } from "@/lib/currency";
+import { ShieldCheck } from "lucide-react";
 
 export default function StatementPage() {
   const { profile } = useAuth();
@@ -12,7 +13,9 @@ export default function StatementPage() {
   const [endDate, setEndDate] = useState("");
   const [loading, setLoading] = useState(true);
 
-  async function load() {
+  const sym = currencySymbol(profile?.country);
+
+  const load = useCallback(async () => {
     setLoading(true);
     let url = "/api/statement?";
     if (startDate) url += `startDate=${startDate}&`;
@@ -28,11 +31,21 @@ export default function StatementPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [endDate, startDate]);
 
   useEffect(() => {
-    load();
-  }, [startDate, endDate]);
+    void load();
+  }, [load]);
+
+  function walletLabel(wt: string) {
+    switch (wt) {
+      case "main": return "Main";
+      case "booster": return "Booster";
+      case "nivesh": return "Nivesh";
+      case "usdt": return "USDT";
+      default: return wt;
+    }
+  }
 
   return (
     <DashboardShell>
@@ -68,7 +81,7 @@ export default function StatementPage() {
       <div className="glass-card p-5 mb-4">
         <p className="text-xs text-ink-muted">Closing Balance</p>
         <p className="font-display text-2xl font-bold text-neon-cyan">
-          {currencySymbol(profile?.country)}
+          {sym}
           {loading ? "..." : (data?.closingBalance ?? 0).toLocaleString()}
         </p>
       </div>
@@ -85,16 +98,42 @@ export default function StatementPage() {
                 <th className="py-2 pr-4">Date</th>
                 <th className="py-2 pr-4">Type</th>
                 <th className="py-2 pr-4">Credit</th>
-                <th className="py-2">Debit</th>
+                <th className="py-2 pr-4">Debit</th>
+                <th className="py-2">Remarks</th>
               </tr>
             </thead>
             <tbody>
               {data.entries.map((e: any) => (
                 <tr key={e._id} className="border-b border-white/5 last:border-0">
-                  <td className="py-2.5 pr-4 text-ink-muted">{new Date(e.createdAt).toLocaleDateString()}</td>
-                  <td className="py-2.5 pr-4 capitalize">{e.type.replace(/_/g, " ")}</td>
-                  <td className="py-2.5 pr-4 text-neon-green">{e.direction === "credit" ? e.amount.toLocaleString() : ""}</td>
-                  <td className="py-2.5">{e.direction === "debit" ? e.amount.toLocaleString() : ""}</td>
+                  <td className="py-2.5 pr-4 text-ink-muted whitespace-nowrap">
+                    {new Date(e.createdAt).toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" })}
+                  </td>
+                  <td className="py-2.5 pr-4">
+                    <div className="flex items-center gap-1.5">
+                      {e.isAdmin && (
+                        <ShieldCheck size={12} className="text-amber-400 shrink-0" />
+                      )}
+                      <span className="capitalize">
+                        {e.isAdmin
+                          ? `Admin ${e.type === "admin_credit" ? "Credit" : "Debit"}`
+                          : e.type.replace(/_/g, " ")}
+                      </span>
+                      {e.isAdmin && e.walletType && (
+                        <span className="text-[10px] px-1.5 py-px rounded-full bg-amber-500/15 text-amber-400 ml-1">
+                          {walletLabel(e.walletType)}
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="py-2.5 pr-4 text-neon-green">
+                    {e.direction === "credit" ? `${sym}${e.amount.toLocaleString()}` : ""}
+                  </td>
+                  <td className="py-2.5 pr-4">
+                    {e.direction === "debit" ? `${sym}${e.amount.toLocaleString()}` : ""}
+                  </td>
+                  <td className="py-2.5 text-xs text-ink-muted max-w-[200px] truncate">
+                    {e.isAdmin ? e.adminRemarks : (e.note || "—")}
+                  </td>
                 </tr>
               ))}
             </tbody>

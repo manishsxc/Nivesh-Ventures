@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import User from "@/models/User";
 import Transaction from "@/models/Transaction";
+import AdminWalletTransaction from "@/models/AdminWalletTransaction";
 import { getSessionFromCookies } from "@/lib/auth-server";
 
 export async function GET() {
@@ -10,7 +11,7 @@ export async function GET() {
 
   await connectDB();
   const user = await User.findOne({ memberId: session.memberId }).select(
-    "walletBalance nivshWalletBalance usdtWalletBalance usdtWalletAddress " +
+    "walletBalance boosterWalletBalance nivshWalletBalance usdtWalletBalance usdtWalletAddress " +
     "totalReferralIncome totalMatchingIncome totalReturnsIncome totalLevelIncome totalRewardIncome " +
     "totalInvestment totalWithdrawn"
   );
@@ -20,6 +21,35 @@ export async function GET() {
     .sort({ createdAt: -1 })
     .limit(100);
 
+  // Fetch admin wallet transactions
+  const adminTx = await AdminWalletTransaction.find({ userId: user._id })
+    .sort({ createdAt: -1 })
+    .limit(100);
+
+  // Normalize admin transactions to match regular transaction shape
+  const normalizedAdmin = adminTx.map((a: any) => ({
+    _id: a._id,
+    type: `admin_${a.type}`,
+    direction: a.type, // credit or debit
+    amount: a.amount,
+    currency: "INR",
+    status: "completed",
+    note: a.adminRemarks,
+    createdAt: a.createdAt,
+    isAdmin: true,
+    walletType: a.walletType,
+    transactionId: a.transactionId,
+    adminRemarks: a.adminRemarks,
+  }));
+
+  // Merge and sort
+  const allTransactions = [
+    ...transactions.map((t: any) => ({ ...t.toObject(), isAdmin: false })),
+    ...normalizedAdmin,
+  ]
+    .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 200);
+
   const totalEarnings =
     (user.totalReferralIncome || 0) +
     (user.totalMatchingIncome || 0) +
@@ -27,5 +57,5 @@ export async function GET() {
     (user.totalLevelIncome || 0) +
     (user.totalRewardIncome || 0);
 
-  return NextResponse.json({ wallet: user, transactions, totalEarnings });
+  return NextResponse.json({ wallet: user, transactions: allTransactions, totalEarnings });
 }
