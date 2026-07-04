@@ -11,7 +11,7 @@ cp .env.example .env
 ```
 github repo repush:
 git add .
-git commit -m "ui and header , and many extra things fixed."
+git commit -m "add admin panel feature and other updates"
 git push -u origin main
 ```
 
