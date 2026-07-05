@@ -66,8 +66,11 @@ const UserSchema = new Schema(
     isPremium: { type: Boolean, default: false },
     premiumActivatedAt: { type: Date, default: null },
     premiumExpiresAt: { type: Date, default: null },
+    languagePreference: { type: String, enum: ["en", "hi"], default: "en" },
+    activatedByFreePin: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
 
 export default models.User || model("User", UserSchema);
+

@@ -22,6 +22,13 @@ const tabs = [
   { href: "/admin/support", label: "Support Tickets" },
   { href: "/admin/booster-wallet", label: "Booster Wallet" },
   { href: "/admin/notifications", label: "Notifications" },
+  { href: "/admin/audit-logs", label: "Audit Logs" },
+  { href: "/admin/business-rules", label: "Business Rules" },
+  { href: "/admin/ledger", label: "Ledger" },
+  { href: "/admin/fraud", label: "Fraud Detection" },
+  { href: "/admin/backup", label: "Backups" },
+  { href: "/admin/pins", label: "PIN Management" },
+  { href: "/admin/wallet-management", label: "Wallet Management" },
 ];
 
 export default function AdminSubnav() {

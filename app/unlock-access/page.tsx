@@ -4,18 +4,50 @@ import { useEffect, useState } from "react";
 import DashboardShell from "@/components/DashboardShell";
 import { useAuth } from "@/lib/AuthContext";
 import toast from "react-hot-toast";
-import { Unlock } from "lucide-react";
+import { Unlock, ShieldAlert, Sparkles, Clock } from "lucide-react";
 import { currencySymbol } from "@/lib/currency";
 
 export default function UnlockAccessPage() {
   const { profile, refreshProfile } = useAuth();
   const [status, setStatus] = useState<any>(null);
   const [busy, setBusy] = useState(false);
+  const [countdown, setCountdown] = useState("");
+  const [isExpired, setIsExpired] = useState(true);
 
   function load() {
     fetch("/api/unlock-access", { cache: "no-store" }).then((r) => r.json()).then(setStatus);
   }
-  useEffect(() => { load(); }, []);
+  
+  useEffect(() => {
+    load();
+  }, []);
+
+  // Countdown timer logic
+  useEffect(() => {
+    if (!status?.accessExpiresAt) {
+      setCountdown("");
+      setIsExpired(true);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      const diff = new Date(status.accessExpiresAt).getTime() - Date.now();
+      if (diff <= 0) {
+        setCountdown("Expired");
+        setIsExpired(true);
+        clearInterval(interval);
+      } else {
+        setIsExpired(false);
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+        setCountdown(`${days}d ${hours}h ${minutes}m ${seconds}s`);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [status]);
 
   async function renew() {
     setBusy(true);
@@ -33,32 +65,67 @@ export default function UnlockAccessPage() {
     }
   }
 
+  const isButtonDisabled = busy || (!isExpired && status?.isActive);
+
   return (
     <DashboardShell>
-      <h1 className="font-display text-2xl font-bold mb-6">Buy / Renew Unlock Access</h1>
+      <div className="flex items-center gap-2 mb-6">
+        <Sparkles className="text-neon-cyan" size={24} />
+        <h1 className="font-display text-2xl font-bold text-white">Unlock Access Center</h1>
+      </div>
 
-      <div className="glass-card p-8 max-w-lg text-center">
-        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-neon-violet to-neon-cyan flex items-center justify-center mx-auto mb-4">
-          <Unlock size={24} className="text-base" />
+      <div className="glass-card p-8 max-w-lg text-center border border-white/10 relative overflow-hidden bg-gradient-to-b from-white/5 to-transparent">
+        {/* Glow effect */}
+        <div className="absolute -top-24 -left-24 w-48 h-48 bg-neon-cyan/20 rounded-full filter blur-3xl"></div>
+        <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-neon-violet/20 rounded-full filter blur-3xl"></div>
+
+        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-neon-violet to-neon-cyan flex items-center justify-center mx-auto mb-6 shadow-neon-sm">
+          <Unlock size={28} className="text-white animate-pulse" />
         </div>
-        <p className="text-sm text-ink-muted mb-1">Member</p>
-        <p className="font-display text-lg font-semibold mb-4">{profile?.fullName} ({profile?.memberId})</p>
+        
+        <p className="text-xs text-ink-muted uppercase tracking-wider font-semibold">Account Owner</p>
+        <p className="font-display text-lg font-bold text-white mb-6 mt-1">
+          {profile?.fullName} <span className="text-ink-muted text-sm font-normal">({profile?.memberId})</span>
+        </p>
 
-        <div className="bg-base-soft rounded-xl p-4 mb-4">
-          <p className="text-xs text-ink-muted">Status</p>
-          <p className={`font-semibold ${status?.isActive ? "text-neon-green" : "text-neon-magenta"}`}>
-            {status?.isActive ? "Active" : "Inactive"}
-          </p>
-          {status?.accessExpiresAt && (
-            <p className="text-xs text-ink-muted mt-1">
-              Expires: {new Date(status.accessExpiresAt).toLocaleDateString()}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div className="bg-white/5 border border-white/5 rounded-2xl p-4 text-center">
+            <p className="text-xs text-ink-muted mb-1 font-medium">Access Status</p>
+            <p className={`text-lg font-bold ${status?.isActive ? "text-neon-green" : "text-neon-magenta"}`}>
+              {status?.isActive ? "Active Unlocked" : "Inactive Locked"}
             </p>
-          )}
+          </div>
+
+          <div className="bg-white/5 border border-white/5 rounded-2xl p-4 text-center flex flex-col justify-center">
+            <p className="text-xs text-ink-muted mb-1 font-medium flex items-center justify-center gap-1">
+              <Clock size={12} className="text-neon-cyan" /> Remaining Time
+            </p>
+            <p className="text-sm font-mono font-bold text-white mt-0.5">
+              {countdown || "No Active Access"}
+            </p>
+          </div>
         </div>
 
-        <p className="text-sm text-ink-muted mb-4">Renewal Amount: <span className="text-neon-cyan font-semibold">{currencySymbol(profile?.country)}30</span> — valid for 365 days.</p>
-        <button disabled={busy} onClick={renew} className="btn-primary w-full">
-          {busy ? "Processing..." : "Renew Unlock Access"}
+        <div className="bg-neon-violet/10 border border-neon-violet/20 rounded-2xl p-4 mb-8 text-left flex items-start gap-3">
+          <ShieldAlert className="text-neon-violet shrink-0 mt-0.5" size={18} />
+          <div>
+            <h4 className="text-xs font-semibold text-white">Renewal Information</h4>
+            <p className="text-[11px] text-ink-muted mt-1 leading-relaxed">
+              Renewing your unlock access requires a fee of <span className="text-neon-cyan font-bold">{currencySymbol(profile?.country)}30</span>. This will guarantee account activation eligibility and binary MLM payout structure access for 365 days.
+            </p>
+          </div>
+        </div>
+
+        <button
+          disabled={isButtonDisabled}
+          onClick={renew}
+          className={`w-full py-3.5 rounded-xl font-display font-semibold transition-all duration-300 ${
+            isButtonDisabled
+              ? "bg-white/5 text-ink-muted border border-white/5 cursor-not-allowed"
+              : "btn-primary shadow-neon text-white hover:scale-[1.02]"
+          }`}
+        >
+          {busy ? "Processing..." : !isExpired && status?.isActive ? "Access Unlocked (Active)" : "Renew Unlock Access"}
         </button>
       </div>
     </DashboardShell>

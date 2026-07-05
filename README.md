@@ -8,10 +8,11 @@ Production-ready member + admin platform. Next.js 14, MongoDB Atlas, Firebase Au
 npm install
 cp .env.example .env
 ```
+
+## github repo repush:
 ```
-github repo repush:
 git add .
-git commit -m "add admin panel feature and other updates"
+git commit -m "add admin panel feature and other updates with landing page"
 git push -u origin main
 ```
 

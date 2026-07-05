@@ -14,16 +14,34 @@ import {
   Clock,
   ShieldCheck,
   RefreshCw,
+  Play,
+  Pause,
+  XOctagon,
+  Eye,
+  Filter,
 } from "lucide-react";
 
 export default function AdminMonthlyClosingPage() {
   const [data, setData] = useState<any>(null);
+  const [overrideData, setOverrideData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
 
   // Configuration inputs
   const [returnPct, setReturnPct] = useState(6.0);
   const [distPct, setDistPct] = useState(100);
+
+  // Manual Override states
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+  const [userIdFilter, setUserIdFilter] = useState("");
+  const [usernameFilter, setUsernameFilter] = useState("");
+  const [rankFilter, setRankFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [previewData, setPreviewData] = useState<any>(null);
+  const [showPreview, setShowPreview] = useState(false);
+  const [showProgress, setShowProgress] = useState(false);
+  const [progressVal, setProgressVal] = useState(0);
+  const [currentStep, setCurrentStep] = useState("");
 
   const fetchClosingData = async () => {
     try {
@@ -35,6 +53,13 @@ export default function AdminMonthlyClosingPage() {
       if (json.currentClosing) {
         setReturnPct(json.currentClosing.monthlyReturnPercentage || 6.0);
         setDistPct(json.currentClosing.distributionPercentage || 100);
+      }
+
+      // Fetch override specific metrics
+      const ovRes = await fetch("/api/admin/manual-override", { cache: "no-store" });
+      if (ovRes.ok) {
+        const ovJson = await ovRes.json();
+        setOverrideData(ovJson);
       }
     } catch (err: any) {
       toast.error(err.message || "An error occurred");
@@ -125,6 +150,148 @@ export default function AdminMonthlyClosingPage() {
     }
   };
 
+  // --- Manual Override Controls ---
+
+  const handlePauseClosing = async () => {
+    if (!confirm("Are you sure you want to PAUSE the Monthly Closing?")) return;
+    setActionLoading(true);
+    try {
+      const res = await fetch("/api/admin/monthly-closing", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "pause_closing",
+          month: data.currentMonth,
+          reason: "Paused manually by admin",
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to pause closing");
+      toast.success("Closing execution paused successfully");
+      fetchClosingData();
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleResumeClosing = async () => {
+    if (!confirm("Are you sure you want to RESUME the Monthly Closing?")) return;
+    setActionLoading(true);
+    try {
+      const res = await fetch("/api/admin/monthly-closing", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "resume_closing",
+          month: data.currentMonth,
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to resume closing");
+      toast.success("Closing execution resumed");
+      fetchClosingData();
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleCancelClosing = async () => {
+    if (!confirm("Warning: Reverting/Cancelling will delete all staged calculations. Proceed?")) return;
+    setActionLoading(true);
+    try {
+      const res = await fetch("/api/admin/monthly-closing", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "cancel_closing",
+          month: data.currentMonth,
+          reason: "Cancelled by Admin",
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to cancel closing");
+      toast.success("Monthly Closing has been cancelled and reset");
+      fetchClosingData();
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handlePreview = async () => {
+    if (selectedTypes.length === 0) {
+      toast.error("Please select at least one income type to preview");
+      return;
+    }
+    setActionLoading(true);
+    try {
+      const res = await fetch("/api/admin/monthly-closing", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "preview_income",
+          month: data.currentMonth,
+          incomeTypes: selectedTypes,
+          userIds: userIdFilter ? [userIdFilter] : undefined,
+        }),
+      });
+      const preview = await res.json();
+      if (!res.ok) throw new Error(preview.error || "Failed to generate preview");
+      setPreviewData(preview);
+      setShowPreview(true);
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleManualRelease = async () => {
+    if (!confirm("Confirm to execute manual release matching your filters?")) return;
+    setShowPreview(false);
+    setShowProgress(true);
+    setProgressVal(10);
+    setCurrentStep("Initializing payout engine...");
+
+    try {
+      const res = await fetch("/api/admin/manual-override", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          month: data.currentMonth,
+          incomeTypes: selectedTypes,
+          userIds: userIdFilter ? [userIdFilter] : undefined,
+          username: usernameFilter,
+          rank: rankFilter,
+          status: statusFilter,
+        }),
+      });
+      
+      setProgressVal(60);
+      setCurrentStep("Writing transactions & notifying members...");
+      
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Release failed");
+      
+      setProgressVal(100);
+      setCurrentStep("Completed!");
+      toast.success(`Successfully processed ${result.usersProcessed} users.`);
+      setTimeout(() => setShowProgress(false), 2000);
+      fetchClosingData();
+    } catch (err: any) {
+      toast.error(err.message);
+      setShowProgress(false);
+    }
+  };
+
+  const handleToggleType = (type: string) => {
+    setSelectedTypes((prev) =>
+      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
+    );
+  };
+
   if (loading) {
     return (
       <DashboardShell>
@@ -170,6 +337,34 @@ export default function AdminMonthlyClosingPage() {
           <RefreshCw size={14} className={actionLoading ? "animate-spin" : ""} />
           Refresh Status
         </button>
+      </div>
+
+      {/* --- Part 1 Requirement 11: Dashboard Override Metrics --- */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="stat-card">
+          <span className="text-xs text-ink-muted">Auto Release Status</span>
+          <p className="font-display text-lg font-bold text-white mt-1 capitalize">
+            {overrideData?.autoReleaseStatus || "pending"}
+          </p>
+        </div>
+        <div className="stat-card">
+          <span className="text-xs text-ink-muted">Manual Release Status</span>
+          <p className="font-display text-lg font-bold text-white mt-1 capitalize">
+            {overrideData?.manualReleaseStatus || "pending"}
+          </p>
+        </div>
+        <div className="stat-card">
+          <span className="text-xs text-ink-muted">Remaining Pending Income</span>
+          <p className="font-display text-lg font-bold text-neon-violet mt-1">
+            ${overrideData?.pendingManualIncome?.toLocaleString() || "0.00"}
+          </p>
+        </div>
+        <div className="stat-card">
+          <span className="text-xs text-ink-muted">Last Manual Action By</span>
+          <p className="font-display text-xs font-semibold text-ink-muted mt-2">
+            {overrideData?.lastManualActionBy || "None"}
+          </p>
+        </div>
       </div>
 
       {/* ── Section 1: Dashboard Indicators ── */}
@@ -256,7 +451,7 @@ export default function AdminMonthlyClosingPage() {
               <div className="space-y-4 mb-4">
                 <div>
                   <label className="flex justify-between text-xs text-ink-muted mb-1">
-                    <span>Monthly Returns (%)</span>
+                    <span>Monthly Yield (%)</span>
                     <span className="text-neon-cyan font-semibold">{returnPct}%</span>
                   </label>
                   <input
@@ -359,7 +554,7 @@ export default function AdminMonthlyClosingPage() {
                 ].map((item) => {
                   const isReleased = data?.currentClosing?.releasedTypes?.includes(item.key);
                   return (
-                    <div key={item.key} className="flex justify-between items-center p-2 border border-white/5 bg-white/5 rounded-xl">
+                     <div key={item.key} className="flex justify-between items-center p-2 border border-white/5 bg-white/5 rounded-xl">
                       <span className="text-xs text-white font-medium">{item.label}</span>
                       <button
                         onClick={() => handleReleaseIncome(item.key, item.label)}
@@ -389,6 +584,190 @@ export default function AdminMonthlyClosingPage() {
           </div>
         </div>
       </div>
+
+      {/* --- Part 1 Requirement 1: Manual Action Controls Section --- */}
+      <div className="glass-card p-6 mb-6">
+        <h2 className="font-display font-semibold mb-4 text-white flex items-center gap-2">
+          <Play size={18} className="text-neon-magenta" />
+          Manual Action Controls (Super Admin Override)
+        </h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+          <button
+            onClick={handlePauseClosing}
+            disabled={actionLoading || data?.status !== "closing_in_progress" || overrideData?.manualClosingStatus === "paused"}
+            className="flex items-center justify-center gap-2 text-xs border border-white/10 bg-white/5 hover:bg-white/10 text-ink px-4 py-2.5 rounded-xl transition"
+          >
+            <Pause size={14} />
+            Pause Closing
+          </button>
+          <button
+            onClick={handleResumeClosing}
+            disabled={actionLoading || overrideData?.manualClosingStatus !== "paused"}
+            className="flex items-center justify-center gap-2 text-xs border border-white/10 bg-white/5 hover:bg-white/10 text-ink px-4 py-2.5 rounded-xl transition"
+          >
+            <Play size={14} />
+            Resume Closing
+          </button>
+          <button
+            onClick={handleCancelClosing}
+            disabled={actionLoading || data?.status === "open" || data?.status === "closed"}
+            className="flex items-center justify-center gap-2 text-xs border border-white/10 bg-white/5 hover:bg-white/10 text-neon-magenta px-4 py-2.5 rounded-xl transition"
+          >
+            <XOctagon size={14} />
+            Cancel Closing
+          </button>
+        </div>
+
+        {/* --- Part 1 Requirement 3 & 4: Selectable Manual Income Release & User filters --- */}
+        <div className="border-t border-white/5 pt-6 mt-6">
+          <h3 className="font-display font-medium text-white mb-4 flex items-center gap-2 text-sm">
+            <Filter size={16} className="text-neon-cyan" />
+            Income Filters & Manual Payout Trigger
+          </h3>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div>
+              <label className="block text-xs text-ink-muted mb-2 font-semibold">Select Income Types</label>
+              <div className="space-y-2">
+                {[
+                  { key: "referral_income", label: "Referral Income" },
+                  { key: "matching_income", label: "Matching Income" },
+                  { key: "booster_income", label: "Booster Income" },
+                  { key: "reward_income", label: "Reward Income" },
+                  { key: "returns_income", label: "Investor Monthly Returns" },
+                  { key: "level_income", label: "Returns Level Income" },
+                ].map((item) => (
+                  <label key={item.key} className="flex items-center gap-2 text-xs text-ink cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectedTypes.includes(item.key)}
+                      onChange={() => handleToggleType(item.key)}
+                      className="rounded accent-neon-cyan"
+                    />
+                    {item.label}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs text-ink-muted mb-1 font-semibold">User ID (Optional)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. MBR1002"
+                  value={userIdFilter}
+                  onChange={(e) => setUserIdFilter(e.target.value)}
+                  className="input-field w-full text-xs py-1.5"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-ink-muted mb-1 font-semibold">Username / Name Search</label>
+                <input
+                  type="text"
+                  placeholder="e.g. John Doe"
+                  value={usernameFilter}
+                  onChange={(e) => setUsernameFilter(e.target.value)}
+                  className="input-field w-full text-xs py-1.5"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs text-ink-muted mb-1 font-semibold">Rank Filter</label>
+                <select
+                  value={rankFilter}
+                  onChange={(e) => setRankFilter(e.target.value)}
+                  className="input-field w-full text-xs py-1.5 bg-black"
+                >
+                  <option value="">All Ranks</option>
+                  <option value="Star">Star</option>
+                  <option value="Gold">Gold</option>
+                  <option value="Diamond">Diamond</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs text-ink-muted mb-1 font-semibold">Active Status</label>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="input-field w-full text-xs py-1.5 bg-black"
+                >
+                  <option value="">All</option>
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 mt-6">
+            <button
+              onClick={handlePreview}
+              className="flex items-center gap-2 text-xs border border-white/10 bg-white/5 hover:bg-white/10 text-ink px-4 py-2.5 rounded-xl transition"
+            >
+              <Eye size={14} />
+              Preview Eligible Payouts
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* --- Part 1 Requirement 7: Preview Modal --- */}
+      {showPreview && previewData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="glass-card max-w-lg w-full p-6 border border-white/15">
+            <h3 className="font-display font-semibold text-lg text-white mb-2">Release Preview</h3>
+            <div className="space-y-3 my-4 text-xs text-ink-muted">
+              <div className="flex justify-between border-b border-white/5 pb-2">
+                <span>Eligible Users:</span>
+                <span className="text-white font-bold">{previewData.eligibleUserCount}</span>
+              </div>
+              <div className="flex justify-between border-b border-white/5 pb-2">
+                <span>Total Amount to Release:</span>
+                <span className="text-neon-cyan font-bold">${previewData.totalAmount.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between border-b border-white/5 pb-2">
+                <span>Wallet Credits (Total):</span>
+                <span className="text-white font-bold">${previewData.totalWalletCredit.toFixed(2)}</span>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => setShowPreview(false)}
+                className="px-4 py-2 text-xs border border-white/10 bg-white/5 rounded-xl text-ink"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleManualRelease}
+                className="px-4 py-2 text-xs btn-primary rounded-xl text-ink font-semibold"
+              >
+                Approve & Release
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- Part 1 Requirement 8: Progress Modal --- */}
+      {showProgress && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="glass-card max-w-sm w-full p-6 border border-white/15 text-center">
+            <h3 className="font-display font-semibold text-base text-white mb-2">Processing Releases</h3>
+            <p className="text-xs text-ink-muted mb-4">{currentStep}</p>
+            <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden mb-6">
+              <div
+                className="bg-neon-cyan h-full transition-all duration-300"
+                style={{ width: `${progressVal}%` }}
+              ></div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Section 3: History & Release Logs ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

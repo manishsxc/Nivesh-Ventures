@@ -33,6 +33,16 @@ const MonthlyClosingSchema = new Schema(
     ],
     frozenAt: { type: Date, default: null },
     completedAt: { type: Date, default: null },
+    // Manual override fields (additive — backward compatible)
+    pausedAt: { type: Date, default: null },
+    pauseReason: { type: String, default: "" },
+    manualClosingStatus: {
+      type: String,
+      enum: ["active", "paused", "cancelled"],
+      default: "active",
+    },
+    lastManualActionBy: { type: String, default: "" },
+    lastManualActionAt: { type: Date, default: null },
   },
   { timestamps: true }
 );

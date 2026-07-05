@@ -1,15 +1,24 @@
 {
-  "name": "Nivesh Ventures MLM",
+  "name": "Nivesh Ventures MLM Platform",
   "short_name": "Nivesh",
-  "description": "Binary MLM member & admin platform — wallet, income, team, withdrawals.",
+  "description": "Premium Monthly Yield and Multi-Wallet MLM Platform",
   "start_url": "/dashboard",
   "display": "standalone",
-  "background_color": "#0A0E1A",
-  "theme_color": "#7B5CFF",
+  "background_color": "#000000",
+  "theme_color": "#d946ef",
   "orientation": "portrait-primary",
   "icons": [
-    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
   ]
 }
